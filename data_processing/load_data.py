@@ -34,6 +34,26 @@ def load_vessels(file_name, crs):
     return vessels, vessels.geometry.total_bounds
 
 
+def load_protected_areas(crs):
+    imma = (
+        gpd.read_file('data/imma3851.gpkg')
+        [['Title', 'geometry']]
+        .rename(columns={'Title': 'name'})
+        .explode()
+        .to_crs(crs)
+    )
+
+    mpa = (
+        gpd.read_file('data/mpa3851.gpkg')
+        [['Name', 'geometry']]
+        .rename(columns={'Name': 'name'})
+        .explode()
+        .to_crs(crs)
+    )
+
+    return gpd.GeoDataFrame(pd.concat([imma, mpa], ignore_index=True))
+
+
 def load_basemap(file_name, crs):
     basemap = gpd.read_file(file_name)
 
@@ -51,8 +71,8 @@ def load_all(crs=2193):
 
     whales = load_whales('data/whales/df_all_3.csv', bounds, crs=crs)
 
+    protected_areas = load_protected_areas(crs=crs)
+
     basemap = load_basemap('data/territorial-authority-2022-generalised.gpkg', crs=crs)
 
-    # TODO: Load MPAs
-
-    return whales, vessels, basemap, bounds
+    return whales, vessels, protected_areas, basemap, bounds
