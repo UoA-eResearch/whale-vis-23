@@ -1,0 +1,6 @@
+geopandas
+bokeh
+seaborn
+jupyterlab
+numpy
+tqdm
