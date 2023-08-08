@@ -18,9 +18,9 @@ def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds):
 
     p = figure(width=1200, height=1200)
 
-    p.patches('xs', 'ys', source=basemap_source, fill_color='lightgreen', line_alpha=1, alpha=0.7)
-
     p.patches('xs', 'ys', source=protected_source, fill_color='lightblue', line_alpha=1, alpha=0.7)
+
+    p.patches('xs', 'ys', source=basemap_source, fill_color='lightgreen', line_alpha=1, alpha=0.7)
 
     p.multi_line('xs', 'ys', source=vessel_source, color='gray', line_width=1, alpha=0.1)
 
