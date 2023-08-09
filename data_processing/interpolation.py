@@ -24,7 +24,7 @@ def interpolate_trace(df):
     start_time = ceil_time(input.loc[0, 'timestamp'].tz_localize(None), datetime.timedelta(minutes=10))
     start_seconds = (start_time - input.loc[0, 'timestamp'].tz_localize(None)).seconds
 
-    out_seconds = np.arange(start_seconds, input['s'].max(), 600, dtype=float)
+    out_seconds = np.arange(start_seconds, input['seconds'].max(), 600, dtype=float)
     out_dt = [input.loc[0, 'timestamp'] + datetime.timedelta(seconds=s) for s in out_seconds]
 
     out = pd.DataFrame(interp(out_seconds).T).rename(columns={0: 'x', 1: 'y'})
