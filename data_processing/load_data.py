@@ -2,6 +2,8 @@ import pandas as pd
 import geopandas as gpd
 import topojson as tp
 
+from data_processing.interpolation import interpolate_trace
+
 
 def load_whales(file_name, bounds, crs, interpolate_mins=None):
     # TODO: clip whale paths to vessel extents
@@ -68,7 +70,7 @@ def _clean_vessel_data(file_name):
         group.reset_index(drop=True).to_file(f'data/vessels/{vessel_type}_points.gpkg', driver='GPKG')
 
 
-def load_vessels(file_name, crs):
+def load_vessel_traces(file_name, crs):
     vessels = gpd.read_file(file_name)
 
     # Some vessels have incorrect CRS set
@@ -78,6 +80,24 @@ def load_vessels(file_name, crs):
     vessels = vessels.to_crs(crs)
 
     return vessels, vessels.geometry.total_bounds
+
+
+def load_vessel_points(filename, crs):
+    gdf = gpd.read_file(filename)
+
+    vessel_type = gdf.loc[0, 'type']
+
+    # Interpolate data individually for each vessel
+    results = {}
+    for callsign, group in gdf.groupby('callsign'):
+        res = interpolate_trace(group)
+        res['callsign'] = callsign
+        res['type'] = vessel_type
+        results['callsign'] = res
+
+    # Combine into a single dataframe
+    gdf = pd.concat(results, ignore_index=True)
+    return gdf.to_crs(crs)
 
 
 def load_protected_areas(crs):
@@ -116,7 +136,7 @@ def reducy_poly_res(gdf, tolerance):
 
 
 def load_all(crs=2193):
-    vessels, bounds = load_vessels('data/vessels/fishing_all.gpkg', crs=crs)
+    vessels, bounds = load_vessel_traces('data/vessels/fishing_all.gpkg', crs=crs)
 
     whales = load_whales('data/whales/df_all_3.csv', bounds, crs=crs)
 
