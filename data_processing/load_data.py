@@ -3,16 +3,31 @@ import geopandas as gpd
 import topojson as tp
 
 
-def load_whales(file_name, bounds, crs):
+def load_whales(file_name, bounds, crs, interpolate_mins=None):
     # TODO: clip whale paths to vessel extents
     # TODO: join whale paths by ID
-    wdf = pd.read_csv(file_name)
+    wdf = pd.read_csv(file_name, parse_dates=['date'])
 
     # Drop unwanted columns
     wdf = wdf[['id', 'name', 'date', 'lat', 'lon']]
 
+    if interpolate_mins is not None:
+        # Resample data to finer time resolution and interpolate points
+        # TODO: check this is valid in given crs
+        wdf = (
+            wdf.set_index('date')
+            .sort_values('id')
+            .groupby('id')
+            .resample(f'{interpolate_mins}min')  # resample to finer time resolution
+            .interpolate()                       # interpolate lat/long
+            .ffill()                             # fill non-numeric cols (name, id)
+            .reset_index(level='id', drop=True)  # drop id from index
+            .reset_index()                       # move date index back to column
+        )
+
     # Convert to geodataframe
     wgdf = gpd.GeoDataFrame(wdf, geometry=gpd.points_from_xy(wdf['lon'], wdf['lat']), crs=4326)
+    wgdf.drop(columns=['lat', 'lon'], inplace=True)
 
     # Reproject
     wgdf = wgdf.to_crs(crs)
