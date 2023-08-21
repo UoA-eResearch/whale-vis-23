@@ -1,8 +1,7 @@
 import numpy as np
-from bokeh.io import show
-from bokeh.models import GeoJSONDataSource, CategoricalColorMapper
+from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorMapper
 from bokeh.plotting import figure
-from bokeh.palettes import Viridis256
+from bokeh.palettes import Viridis256, Inferno256
 
 
 def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds):
@@ -18,13 +17,13 @@ def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds):
 
     p = figure(width=1200, height=1200)
 
-    p.patches('xs', 'ys', source=protected_source, fill_color='lightblue', line_alpha=1, alpha=0.7)
+    p.patches('xs', 'ys', source=protected_source, fill_color='lightblue', line_alpha=1, fill_alpha=0.5)
 
-    p.patches('xs', 'ys', source=basemap_source, fill_color='lightgreen', line_alpha=1, alpha=0.7)
+    p.patches('xs', 'ys', source=basemap_source, fill_color='lightgreen', line_alpha=1, fill_alpha=0.5)
 
-    p.multi_line('xs', 'ys', source=vessel_source, color='gray', line_width=1, alpha=0.1)
+    p.multi_line('xs', 'ys', source=vessel_source, color='gray', line_width=1, line_alpha=0.1)
 
-    w_lines = p.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, line_width=2)
+    p.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5)
 
     # Zoom to bounds
     p.x_range.start = bounds[0]
@@ -32,4 +31,18 @@ def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds):
     p.y_range.start = bounds[1]
     p.y_range.end = bounds[3]
 
-    show(p)
+    return p
+
+
+def plot_encounters(vessel_points, fig, max_dist=20000):
+    vessel_data = vessel_points[~vessel_points['whale_dist'].isna()]
+    vessel_data = vessel_data[vessel_data['whale_dist'] < max_dist]
+    vessel_data.drop(columns=['timestamp'], inplace=True)
+    vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json())
+
+    cmap = LinearColorMapper(Inferno256, low=vessel_data['whale_dist'].max(), high=0)
+
+    fig.scatter('x', 'y', source=vessel_source, color={'field': 'whale_dist', 'transform': cmap},
+                fill_alpha=1, size=20)
+
+    return fig
