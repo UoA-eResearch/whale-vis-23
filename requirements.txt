@@ -5,3 +5,4 @@ seaborn
 jupyterlab
 numpy
 tqdm
+scipy

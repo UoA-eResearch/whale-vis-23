@@ -25,6 +25,7 @@ def load_whales(file_name, bounds, crs, interpolate_mins=None):
             .ffill()                             # fill non-numeric cols (name, id)
             .reset_index(level='id', drop=True)  # drop id from index
             .reset_index()                       # move date index back to column
+            .rename(columns={'date': 'timestamp'})   # rename date column
         )
 
     # Convert to geodataframe
@@ -143,7 +144,7 @@ def load_all(crs=2193):
     protected_areas = load_protected_areas(crs=crs)
 
     # Coastlines from linz https://data.linz.govt.nz/layer/51153-nz-coastlines-and-islands-polygons-topo-150k/
-    basemap = load_basemap('data/linz_coastlines/nz-coastlines-and-islands-polygons-topo-150k.shp', crs=crs)
+    basemap = load_basemap('data/linz_coastlines/nz-coastlines-and-islands-polygons-topo-150k.gpkg', crs=crs)
 
     # Simplify baselayer topologies
     basemap = reducy_poly_res(basemap, 10)
