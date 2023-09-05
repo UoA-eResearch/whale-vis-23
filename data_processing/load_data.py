@@ -1,10 +1,13 @@
 import pandas as pd
 import geopandas as gpd
 import topojson as tp
-
+from joblib import Memory
 from data_processing.interpolation import interpolate_trace
 
+memory = Memory('cache_data/', verbose=1)
 
+
+@memory.cache()
 def load_whales(file_name, bounds, crs, interpolate_mins=None):
     # TODO: clip whale paths to vessel extents
     # TODO: join whale paths by ID
@@ -71,6 +74,7 @@ def _clean_vessel_data(file_name):
         group.reset_index(drop=True).to_file(f'data/vessels/{vessel_type}_points.gpkg', driver='GPKG')
 
 
+@memory.cache()
 def load_vessel_traces(file_name, crs):
     vessels = gpd.read_file(file_name)
 
@@ -83,6 +87,7 @@ def load_vessel_traces(file_name, crs):
     return vessels, vessels.geometry.total_bounds
 
 
+@memory.cache()
 def load_vessel_points(filename, crs):
     gdf = gpd.read_file(filename)
 
@@ -101,6 +106,7 @@ def load_vessel_points(filename, crs):
     return gdf.to_crs(crs)
 
 
+@memory.cache()
 def load_protected_areas(crs):
     imma = (
         gpd.read_file('data/imma_hr.gpkg')  # Manually edited imma geometry to match NZ coastline
@@ -121,6 +127,7 @@ def load_protected_areas(crs):
     return gpd.GeoDataFrame(pd.concat([imma, mpa], ignore_index=True))
 
 
+@memory.cache()
 def load_basemap(file_name, crs):
     basemap = gpd.read_file(file_name)
 
@@ -136,6 +143,7 @@ def reducy_poly_res(gdf, tolerance):
     return topo.toposimplify(tolerance).to_gdf()
 
 
+@memory.cache()
 def load_all(crs=2193):
     vessels, bounds = load_vessel_traces('data/vessels/fishing_all.gpkg', crs=crs)
 

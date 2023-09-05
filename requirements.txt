@@ -6,3 +6,4 @@ jupyterlab
 numpy
 tqdm
 scipy
+joblib
