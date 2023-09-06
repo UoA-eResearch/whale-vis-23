@@ -51,3 +51,22 @@ def plot_encounters(vessel_points, fig, max_dist=20000):
                 fill_alpha=0.2, size=10, line_color=None)
 
     return fig
+
+
+def plot_location(fig, vessel_points, whale_points, timestamp):
+    """Plot the current location of vessels and whales"""
+    vessel_data = vessel_points[vessel_points['timestamp'] == timestamp]
+    whale_data = whale_points[whale_points['timestamp'] == timestamp]
+
+    vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json(default=str))
+    whale_source = GeoJSONDataSource(geojson=whale_data.to_json(default=str))
+
+    whale_names = whale_points['name'].unique()
+    inds = np.floor(np.linspace(0, 255, len(whale_names))).astype(int)
+    colors = [Viridis256[i] for i in inds]
+    cmapper = CategoricalColorMapper(factors=whale_names, palette=colors)
+
+    fig.scatter('x', 'y', source=vessel_source, color='gray', fill_alpha=1, size=15, line_color=None)
+    fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=1, size=15)
+
+    return fig
