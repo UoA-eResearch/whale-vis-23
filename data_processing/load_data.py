@@ -103,6 +103,7 @@ def load_vessel_points(filename, crs):
 
     # Combine into a single dataframe
     gdf = pd.concat(results, ignore_index=True)
+    gdf['timestamp'] = gdf['timestamp'].dt.tz_localize(None)
     return gdf.to_crs(crs)
 
 
