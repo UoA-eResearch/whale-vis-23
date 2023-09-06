@@ -1,11 +1,11 @@
 import numpy as np
-from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorMapper
+from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorMapper, CDSView, BooleanFilter
 from bokeh.plotting import figure
 from bokeh.palettes import Viridis256, Inferno256
 
 
-def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds):
-    whale_source = GeoJSONDataSource(geojson=whale_df.to_json())
+def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds, timestamp=None):
+    whale_source = GeoJSONDataSource(geojson=whale_df.to_json(default=str))
     vessel_source = GeoJSONDataSource(geojson=vessel_df.to_json())
     protected_source = GeoJSONDataSource(geojson=protected_areas.to_json())
     basemap_source = GeoJSONDataSource(geojson=basemap.to_json())
@@ -23,9 +23,12 @@ def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds):
 
     fig.multi_line('xs', 'ys', source=vessel_source, color='gray', line_width=1, line_alpha=0.1)
 
-    fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5)
-
-
+    if timestamp:
+        whale_view = CDSView(filter=BooleanFilter((whale_df['date'] < timestamp).to_list()))
+        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5,
+                  view=whale_view)
+    else:
+        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5)
 
     # Zoom to bounds
     fig.x_range.start = bounds[0]
