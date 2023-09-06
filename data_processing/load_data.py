@@ -99,7 +99,7 @@ def load_vessel_points(filename, crs):
         res = interpolate_trace(group)
         res['callsign'] = callsign
         res['type'] = vessel_type
-        results['callsign'] = res
+        results[callsign] = res
 
     # Combine into a single dataframe
     gdf = pd.concat(results, ignore_index=True)
