@@ -2,6 +2,7 @@ import numpy as np
 from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorMapper, CDSView, BooleanFilter
 from bokeh.plotting import figure
 from bokeh.palettes import Viridis256, Inferno256
+from geopandas import GeoDataFrame
 
 
 def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds, timestamp=None):
@@ -39,10 +40,14 @@ def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds, timestamp
     return fig
 
 
-def plot_encounters(vessel_points, fig, max_dist=20000):
-    vessel_data = vessel_points[~vessel_points['whale_dist'].isna()]
-    vessel_data = vessel_data[vessel_data['whale_dist'] < max_dist]
-    vessel_data.drop(columns=['timestamp'], inplace=True)
+def plot_encounters(vessel_points: GeoDataFrame, fig: figure, max_dist=20000):
+    mask = (~vessel_points['whale_dist'].isna()) & (vessel_points['whale_dist'] < max_dist)
+    vessel_data = (
+        vessel_points[mask]           # Only points with encounters
+        .drop(columns=['timestamp'])  # Drop timestamp (not json serializable)
+        .sort_values('whale_dist')    # Sort by distance so that closest points are plotted last
+        .iloc[::-1]                   # Reverse order
+    )
     vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json())
 
     cmap = LinearColorMapper(Inferno256, low=vessel_data['whale_dist'].max(), high=0)
