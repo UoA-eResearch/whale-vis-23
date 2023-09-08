@@ -76,13 +76,12 @@ def _clean_vessel_data(file_name):
 
 @memory.cache()
 def load_vessel_traces(file_name, crs):
-    vessels = gpd.read_file(file_name)
-
-    # Some vessels have incorrect CRS set
-    vessels = vessels.set_crs(4326, allow_override=True)
-
-    # Reproject
-    vessels = vessels.to_crs(crs)
+    vessels = (
+        gpd.read_file(file_name)
+        .set_crs(4326, allow_override=True)  # Some vessels have incorrect CRS set
+        .to_crs(crs)                         # Reproject
+        .drop(columns=['track_seg', 'begin', 'end', 'layer', 'path'])
+    )
 
     return vessels, vessels.geometry.total_bounds
 
@@ -108,7 +107,7 @@ def load_vessel_points(filename, crs):
 
 
 @memory.cache()
-def load_protected_areas(crs):
+def load_protected_areas(bounds, crs):
     imma = (
         gpd.read_file('data/imma_hr.gpkg')  # Manually edited imma geometry to match NZ coastline
         [['Title', 'geometry']]
@@ -125,15 +124,27 @@ def load_protected_areas(crs):
         .to_crs(crs)
     )
 
-    return gpd.GeoDataFrame(pd.concat([imma, mpa], ignore_index=True))
+    protected_areas = (
+        gpd.GeoDataFrame(pd.concat([imma, mpa], ignore_index=True))
+        .clip(bounds)   # Clip to bounding box
+        .reset_index(drop=True)
+    )
+
+    return protected_areas
 
 
 @memory.cache()
-def load_basemap(file_name, crs):
-    basemap = gpd.read_file(file_name)
+def load_basemap(file_name, bounds, crs):
+    basemap = (
+        gpd.read_file(file_name)
+        .to_crs(crs)    # Reproject
+        .clip(bounds)   # Clip to bounding box
+        .drop(columns=['name', 'macronated', 'grp_macron', 'TARGET_FID', 'grp_ascii', 'grp_name', 'name_ascii'])
+        .reset_index(drop=True)
+    )
 
-    # Reproject
-    basemap = basemap.to_crs(crs)
+    # Drop small polygons
+    basemap = basemap[basemap.area > 1500]
 
     return basemap
 
@@ -150,10 +161,13 @@ def load_all(crs=2193):
 
     whales = load_whales('data/whales/df_all_3.csv', bounds, crs=crs)
 
-    protected_areas = load_protected_areas(crs=crs)
+    protected_areas = load_protected_areas(bounds, crs=crs)
 
     # Coastlines from linz https://data.linz.govt.nz/layer/51153-nz-coastlines-and-islands-polygons-topo-150k/
-    basemap = load_basemap('data/linz_coastlines/nz-coastlines-and-islands-polygons-topo-150k.gpkg', crs=crs)
+    basemap = load_basemap('data/linz_coastlines/nz-coastlines-and-islands-polygons-topo-150k.gpkg', bounds, crs=crs)
+
+    # Simplify vessel lines
+    vessels['geometry'] = list(map(lambda x: x.simplify(100), vessels['geometry']))
 
     # Simplify baselayer topologies
     basemap = reducy_poly_res(basemap, 10)
