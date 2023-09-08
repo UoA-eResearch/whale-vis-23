@@ -55,8 +55,16 @@ def plot_protected_areas(fig: figure, protected_areas: GeoDataFrame):
     fig.patches('xs', 'ys', source=protected_source, fill_color='lightblue', line_alpha=1, fill_alpha=0.5)
 
 
-def plot_traces(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas: GeoDataFrame,
-                basemap: GeoDataFrame, bounds, timestamp=None):
+def zoom_to_bounds(fig, bounds):
+    """Crop a figure to given bounds"""
+    fig.x_range.start = bounds[0]
+    fig.x_range.end = bounds[2]
+    fig.y_range.start = bounds[1]
+    fig.y_range.end = bounds[3]
+
+
+def traces_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas: GeoDataFrame,
+               basemap: GeoDataFrame, bounds, timestamp=None):
     """Produce plot of basemap, MPAs, vessel traces and whale points"""
     fig = figure(width=1200, height=1200, output_backend='webgl')
 
@@ -66,29 +74,42 @@ def plot_traces(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas
     plot_whale_pts(fig, whale_df, timestamp)
     plot_basemap(fig, basemap)
 
-    # Zoom to bounds
-    fig.x_range.start = bounds[0]
-    fig.x_range.end = bounds[2]
-    fig.y_range.start = bounds[1]
-    fig.y_range.end = bounds[3]
+    zoom_to_bounds(fig, bounds)
 
     return fig
 
 
-def plot_encounters(vessel_points: GeoDataFrame, fig: figure, max_dist=20000):
-    mask = (~vessel_points['whale_dist'].isna()) & (vessel_points['whale_dist'] < max_dist)
+def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000):
+    """Add encounter scatter/heatmap to figure"""
+    mask = (~vessel_pts['whale_dist'].isna()) & (vessel_pts['whale_dist'] < max_dist)
     vessel_data = (
-        vessel_points[mask]           # Only points with encounters
+        vessel_pts[mask]  # Only points with encounters
         .drop(columns=['timestamp'])  # Drop timestamp (not json serializable)
-        .sort_values('whale_dist')    # Sort by distance so that closest points are plotted last
-        .iloc[::-1]                   # Reverse order
+        .sort_values('whale_dist')  # Sort by distance so that closest points are plotted last
+        .iloc[::-1]  # Reverse order
     )
     vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json())
 
     cmap = LinearColorMapper(Inferno256, low=vessel_data['whale_dist'].max(), high=0)
 
     fig.scatter('x', 'y', source=vessel_source, color={'field': 'whale_dist', 'transform': cmap},
-                fill_alpha=0.2, size=10, line_color=None)
+                fill_alpha=0.4, size=10, line_color=None)
+
+
+def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: GeoDataFrame,
+                    protected_areas: GeoDataFrame, basemap: GeoDataFrame, bounds, max_dist=20000):
+    """Produce a plot showing encounters between vessels & whales"""
+    # Base figure containing basemap, MPAs, vessel & whale traces
+    fig = figure(width=1200, height=1200, output_backend='webgl')
+
+    # Add layers
+    plot_protected_areas(fig, protected_areas)
+    plot_vessel_traces(fig, vessel_df)
+    plot_whale_lines(fig, whale_df)
+    plot_encounters(fig, vessel_pts, max_dist)
+    plot_basemap(fig, basemap)
+
+    zoom_to_bounds(fig, bounds)
 
     return fig
 
