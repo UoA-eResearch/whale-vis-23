@@ -5,24 +5,18 @@ from bokeh.palettes import Viridis256, Inferno256
 from geopandas import GeoDataFrame
 
 
-def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds, timestamp=None):
-    whale_source = GeoJSONDataSource(geojson=whale_df.to_json(default=str))
-    vessel_source = GeoJSONDataSource(geojson=vessel_df.to_json())
-    protected_source = GeoJSONDataSource(geojson=protected_areas.to_json())
-    basemap_source = GeoJSONDataSource(geojson=basemap.to_json())
-
+def whale_colormap(whale_df):
+    """Color whales by name"""
     whale_names = whale_df['name'].unique()
     inds = np.floor(np.linspace(0, 255, len(whale_names))).astype(int)
     colors = [Viridis256[i] for i in inds]
-    cmapper = CategoricalColorMapper(factors=whale_names, palette=colors)
+    return CategoricalColorMapper(factors=whale_names, palette=colors)
 
-    fig = figure(width=1200, height=1200)
 
-    fig.patches('xs', 'ys', source=protected_source, fill_color='lightblue', line_alpha=1, fill_alpha=0.5)
-
-    fig.patches('xs', 'ys', source=basemap_source, fill_color='lightgreen', line_alpha=1, fill_alpha=0.5)
-
-    fig.multi_line('xs', 'ys', source=vessel_source, color='gray', line_width=1, line_alpha=0.1)
+def plot_whale_pts(fig, whale_df, timestamp=None):
+    """Add whale points to plot, optionally up to a given timestamp"""
+    whale_source = GeoJSONDataSource(geojson=whale_df.to_json(default=str))
+    cmapper = whale_colormap(whale_df)
 
     if timestamp:
         whale_view = CDSView(filter=BooleanFilter((whale_df['date'] < timestamp).to_list()))
@@ -30,6 +24,45 @@ def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds, timestamp
                   view=whale_view)
     else:
         fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5)
+
+
+def plot_whale_lines(fig, whale_df):
+    """Add coloured whale traces to plot"""
+    whale_source = GeoJSONDataSource(geojson=whale_df.to_json(default=str))
+    cmapper = whale_colormap(whale_df)
+
+    fig.multi_line('xs', 'ys', source=whale_source, color={'field': 'name', 'transform': cmapper}, line_alpha=0.5,
+                   line_width=3)
+
+
+def plot_vessel_traces(fig, vessel_df):
+    """Add vessel traces to plot"""
+    vessel_source = GeoJSONDataSource(geojson=vessel_df.to_json(default=str))
+
+    fig.multi_line('xs', 'ys', source=vessel_source, color='gray', line_width=1, line_alpha=0.05)
+
+
+def plot_basemap(fig, basemap):
+    """Add basemap (coast outline) to plot"""
+    basemap_source = GeoJSONDataSource(geojson=basemap.to_json())
+    fig.patches('xs', 'ys', source=basemap_source, fill_color='lightgreen', line_alpha=1, fill_alpha=1)
+
+
+def plot_protected_areas(fig, protected_areas):
+    """Add marine protected areas to plot"""
+    protected_source = GeoJSONDataSource(geojson=protected_areas.to_json())
+    fig.patches('xs', 'ys', source=protected_source, fill_color='lightblue', line_alpha=1, fill_alpha=0.5)
+
+
+def plot_traces(whale_df, vessel_df, protected_areas, basemap, bounds, timestamp=None):
+    """Produce plot of basemap, MPAs, vessel traces and whale points"""
+    fig = figure(width=1200, height=1200, output_backend='webgl')
+
+    # Add layers
+    plot_protected_areas(fig, protected_areas)
+    plot_vessel_traces(fig, vessel_df)
+    plot_whale_pts(fig, whale_df, timestamp)
+    plot_basemap(fig, basemap)
 
     # Zoom to bounds
     fig.x_range.start = bounds[0]
