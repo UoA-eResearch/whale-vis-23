@@ -1,7 +1,10 @@
+import numpy as np
 import pandas as pd
 import geopandas as gpd
 import topojson as tp
 from joblib import Memory
+from shapely import LineString
+
 from data_processing.interpolation import interpolate_trace
 
 memory = Memory('cache_data/', verbose=1)
@@ -9,8 +12,7 @@ memory = Memory('cache_data/', verbose=1)
 
 @memory.cache()
 def load_whales(file_name, bounds, crs, interpolate_mins=None):
-    # TODO: clip whale paths to vessel extents
-    # TODO: join whale paths by ID
+    """Load whale tracking points, optionally interpolate to finer time resolution"""
     wdf = pd.read_csv(file_name, parse_dates=['date'])
 
     # Drop unwanted columns
@@ -42,6 +44,19 @@ def load_whales(file_name, bounds, crs, interpolate_mins=None):
     wgdf = wgdf.cx[bounds[0]:bounds[2], bounds[1]:bounds[3]]
 
     return wgdf
+
+
+def load_whale_lines(filename, crs):
+    """Loads whale tracking points and converts them to linestrings"""
+    whale_points = load_whales(filename, [0, 0, np.inf, np.inf], crs)
+
+    results = []
+    for id, group in whale_points.groupby('id'):
+        res = {'id': id, 'name': group.iloc[0]['name'],
+               'geometry': LineString(group['geometry'].tolist())}
+        results.append(res)
+
+    return gpd.GeoDataFrame(results)
 
 
 def _clean_vessel_data(file_name):
