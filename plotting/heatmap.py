@@ -20,7 +20,7 @@ def plot_whale_pts(fig: figure, whale_df: GeoDataFrame, timestamp: datetime = No
     cmapper = whale_colormap(whale_df)
 
     if timestamp:
-        whale_view = CDSView(filter=BooleanFilter((whale_df['date'] < timestamp).to_list()))
+        whale_view = CDSView(filter=BooleanFilter((whale_df['timestamp'] < timestamp).to_list()))
         fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5,
                     view=whale_view)
     else:
