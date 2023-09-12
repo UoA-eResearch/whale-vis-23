@@ -1,7 +1,7 @@
 from datetime import datetime
 import numpy as np
 from geopandas import GeoDataFrame
-from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorMapper, CDSView, BooleanFilter
+from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorMapper, CDSView, BooleanFilter, ColorBar
 from bokeh.plotting import figure
 from bokeh.palettes import Viridis256, Inferno256
 
@@ -84,7 +84,6 @@ def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000):
     mask = (~vessel_pts['whale_dist'].isna()) & (vessel_pts['whale_dist'] < max_dist)
     vessel_data = (
         vessel_pts[mask]  # Only points with encounters
-        .drop(columns=['timestamp'])  # Drop timestamp (not json serializable)
         .sort_values('whale_dist')  # Sort by distance so that closest points are plotted last
         .iloc[::-1]  # Reverse order
     )
@@ -94,6 +93,10 @@ def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000):
 
     fig.scatter('x', 'y', source=vessel_source, color={'field': 'whale_dist', 'transform': cmap},
                 fill_alpha=0.4, size=10, line_color=None)
+
+    # Add colorbar
+    color_bar = ColorBar(color_mapper=cmap, title='Encounter distance')
+    fig.add_layout(color_bar, 'right')
 
 
 def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: GeoDataFrame,
