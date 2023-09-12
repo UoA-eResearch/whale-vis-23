@@ -117,20 +117,40 @@ def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: 
     return fig
 
 
-def plot_location(fig, vessel_points, whale_points, timestamp):
-    """Plot the current location of vessels and whales"""
-    vessel_data = vessel_points[vessel_points['timestamp'] == timestamp]
-    whale_data = whale_points[whale_points['timestamp'] == timestamp]
+def plot_location(fig, vessel_pts_df, whale_pts_df, timestamp):
+    vessel_data = vessel_pts_df[vessel_pts_df['timestamp'] == timestamp]
+    whale_data = whale_pts_df[whale_pts_df['timestamp'] == timestamp]
+
+    cmapper = whale_colormap(whale_pts_df)
 
     vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json(default=str))
     whale_source = GeoJSONDataSource(geojson=whale_data.to_json(default=str))
 
-    whale_names = whale_points['name'].unique()
-    inds = np.floor(np.linspace(0, 255, len(whale_names))).astype(int)
-    colors = [Viridis256[i] for i in inds]
-    cmapper = CategoricalColorMapper(factors=whale_names, palette=colors)
+    fig.scatter('x', 'y', source=vessel_source, color='gray', fill_alpha=1, size=5, line_color=None)
+    fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=1, size=10)
 
-    fig.scatter('x', 'y', source=vessel_source, color='gray', fill_alpha=1, size=15, line_color=None)
-    fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=1, size=15)
+
+def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp):
+    """Plot vessel traces up to a given timestamp"""
+    vessel_data = vessels_pts_df[vessels_pts_df['timestamp'] <= timestamp]
+
+    # TODO: consider building CDS for each callsign and streaming data in
+
+    for callsign, group in vessel_data.groupby('callsign'):
+        fig.line(group.geometry.x, group.geometry.y, color='gray', line_width=1, line_alpha=0.5)
+
+
+def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap, bounds, timestamp):
+    """Produce a plot showing the current location of vessels and whales"""
+    fig = figure(width=1200, height=1200, output_backend='webgl')
+
+    # Add layers
+    plot_protected_areas(fig, protected_areas)
+    plot_partial_vessel_traces(fig, vessels_pts_df, timestamp)
+    plot_whale_pts(fig, whales_df, timestamp)
+    plot_basemap(fig, basemap)
+    plot_location(fig, vessels_pts_df, whales_df, timestamp)
+
+    zoom_to_bounds(fig, bounds)
 
     return fig
