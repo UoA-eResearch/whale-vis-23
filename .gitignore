@@ -164,3 +164,10 @@ cache_data/
 
 # Generated animation frames
 frames/
+
+# Unused data
+old_data/
+
+# Large intermediate/output files
+*.pickle
+*.mp4
