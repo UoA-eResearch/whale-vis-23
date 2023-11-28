@@ -5,6 +5,7 @@ import pandas as pd
 from bokeh.io import export_png
 
 from data_processing import load_data
+from data_processing.snaptocoast import internal_points_to_coast
 from plotting import heatmap
 
 if __name__ == '__main__':
@@ -17,8 +18,11 @@ if __name__ == '__main__':
 
     vessel_points = pd.concat(vessel_data_sets)
 
+    vessel_points['geometry'] = vessel_points['geometry'].progress_apply(internal_points_to_coast, coasts=basemap)
+
     # Load whale points
     whales_interp = load_data.load_whales('data/whales/df_all_3.csv', vessel_points.geometry.total_bounds, 2193, 10)
+    whales_interp['geometry'] = whales_interp['geometry'].progress_apply(internal_points_to_coast, coasts=basemap)
 
     # Set up timestamps
     start = '2022-08-01'
