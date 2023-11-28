@@ -5,6 +5,8 @@ from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorM
 from bokeh.plotting import figure
 from bokeh.palettes import Viridis256, Inferno256
 
+from plotting.annotations import north_arrow, scale_bar
+
 
 def whale_colormap(whale_df):
     """Color whales by name"""
@@ -74,6 +76,10 @@ def traces_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas:
     plot_whale_pts(fig, whale_df, timestamp)
     plot_basemap(fig, basemap)
 
+    # Add annotations
+    north_arrow(fig)
+    scale_bar(fig)
+
     zoom_to_bounds(fig, bounds)
 
     return fig
@@ -111,6 +117,10 @@ def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: 
     plot_whale_lines(fig, whale_df)
     plot_encounters(fig, vessel_pts, max_dist)
     plot_basemap(fig, basemap)
+
+    # Add annotations
+    north_arrow(fig)
+    scale_bar(fig)
 
     zoom_to_bounds(fig, bounds)
 
@@ -150,6 +160,10 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap, bounds,
     plot_whale_pts(fig, whales_df, timestamp)
     plot_basemap(fig, basemap)
     plot_location(fig, vessels_pts_df, whales_df, timestamp)
+
+    # Add annotations
+    north_arrow(fig)
+    scale_bar(fig)
 
     zoom_to_bounds(fig, bounds)
 
