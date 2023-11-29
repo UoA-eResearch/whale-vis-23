@@ -1,4 +1,6 @@
 import numpy as np
+from bokeh.events import DocumentReady
+from bokeh.io import curdoc
 from bokeh.models import PolyAnnotation, Label, Plot, BoxAnnotation, CustomJS
 
 
@@ -89,3 +91,5 @@ def scale_bar(figure: Plot, halved=False):
     figure.x_range.js_on_change('end', slider_callback)
     figure.y_range.js_on_change('start', slider_callback)
     figure.y_range.js_on_change('end', slider_callback)
+
+    curdoc().js_on_event(DocumentReady, slider_callback)
