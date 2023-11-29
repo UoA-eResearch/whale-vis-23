@@ -2,9 +2,24 @@ import numpy as np
 from bokeh.events import DocumentReady
 from bokeh.io import curdoc
 from bokeh.models import PolyAnnotation, Label, Plot, BoxAnnotation, CustomJS
+from datetime import datetime
 
 
-def north_arrow(figure: Plot, x_pos=0.05, y_pos=0.9, arrow_size=30, text_size=20):
+def date_annotation(figure: Plot, date: datetime, x_pos=0.9, y_pos=0.95, text_size=20):
+    """Add a date annotation to a map figure"""
+    # Place on the figure
+    abs_x_pos = x_pos * figure.width
+    abs_y_pos = y_pos * figure.height
+
+    # Label the date
+    date_label = Label(x=abs_x_pos, y=abs_y_pos,
+                        text=date.strftime('%d-%m-%Y'), text_font_size=f'{text_size}pt',
+                        text_align='right', text_baseline='top',
+                        x_units='screen', y_units='screen')
+    figure.add_layout(date_label)
+
+
+def north_arrow(figure: Plot, x_pos=0.05, y_pos=0.93, arrow_size=30, text_size=20):
     """Add a north arrow to a map figure"""
     # North arrow
     xs = np.array([0, .5, 1, .5])

@@ -5,7 +5,7 @@ from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorM
 from bokeh.plotting import figure
 from bokeh.palettes import Viridis256, Inferno256
 
-from plotting.annotations import north_arrow, scale_bar
+from plotting.annotations import north_arrow, scale_bar, date_annotation
 
 
 def whale_colormap(whale_df):
@@ -73,7 +73,7 @@ def zoom_to_bounds(fig, bounds):
 def traces_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas: GeoDataFrame,
                basemap: GeoDataFrame, bounds, timestamp=None):
     """Produce plot of basemap, MPAs, vessel traces and whale points"""
-    fig = figure(width=1200, height=1200, output_backend='webgl')
+    fig = figure(width=1200, height=1200, output_backend='webgl', toolbar_location=None)
 
     # Add layers
     plot_protected_areas(fig, protected_areas)
@@ -114,7 +114,7 @@ def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: 
                     protected_areas: GeoDataFrame, basemap: GeoDataFrame, bounds, max_dist=20000):
     """Produce a plot showing encounters between vessels & whales"""
     # Base figure containing basemap, MPAs, vessel & whale traces
-    fig = figure(width=1200, height=1200, output_backend='webgl')
+    fig = figure(width=1200, height=1200, output_backend='webgl', toolbar_location=None)
 
     # Add layers
     plot_protected_areas(fig, protected_areas)
@@ -157,7 +157,7 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp):
 
 def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap, bounds, timestamp):
     """Produce a plot showing the current location of vessels and whales"""
-    fig = figure(width=1200, height=1200, output_backend='webgl')
+    fig = figure(width=1200, height=1200, output_backend='webgl', toolbar_location=None)
 
     # Add layers
     plot_protected_areas(fig, protected_areas)
@@ -169,6 +169,7 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap, bounds,
     # Add annotations
     north_arrow(fig)
     scale_bar(fig)
+    date_annotation(fig, timestamp)
 
     zoom_to_bounds(fig, bounds)
 
