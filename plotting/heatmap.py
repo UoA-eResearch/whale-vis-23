@@ -3,7 +3,7 @@ import numpy as np
 from geopandas import GeoDataFrame
 from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorMapper, CDSView, BooleanFilter, ColorBar
 from bokeh.plotting import figure
-from bokeh.palettes import Viridis256, Inferno256
+from bokeh.palettes import Viridis256, Inferno256, Bright5
 
 from plotting.annotations import north_arrow, scale_bar, date_annotation
 
@@ -150,9 +150,13 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp):
     vessel_data = vessels_pts_df[vessels_pts_df['timestamp'] <= timestamp]
 
     # TODO: consider building CDS for each callsign and streaming data in
-
+    vessel_colors = {t: c for t, c in zip(vessels_pts_df['type'].unique(), Bright5)}
     for callsign, group in vessel_data.groupby('callsign'):
-        fig.line(group.geometry.x, group.geometry.y, color='gray', line_width=1, line_alpha=0.5)
+        vtype = group.iloc[0]['type']
+        fig.line(group.geometry.x, group.geometry.y, color=vessel_colors[vtype], line_width=1, line_alpha=0.5,
+                 legend_label=vtype)
+
+    fig.legend.location = 'bottom_left'
 
 
 def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap, bounds, timestamp):
