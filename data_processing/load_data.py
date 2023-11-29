@@ -140,6 +140,9 @@ def load_protected_areas(bounds, crs):
         .to_crs(crs)
     )
 
+    imma['ptype'] = 'imma'
+    mpa['ptype'] = 'mpa'
+
     protected_areas = (
         gpd.GeoDataFrame(pd.concat([imma, mpa], ignore_index=True))
         .clip(bounds)   # Clip to bounding box

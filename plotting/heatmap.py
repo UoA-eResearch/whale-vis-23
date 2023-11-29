@@ -54,7 +54,12 @@ def plot_basemap(fig: figure, basemap: GeoDataFrame):
 def plot_protected_areas(fig: figure, protected_areas: GeoDataFrame):
     """Add marine protected areas to plot"""
     protected_source = GeoJSONDataSource(geojson=protected_areas.to_json())
-    fig.patches('xs', 'ys', source=protected_source, fill_color='lightblue', line_alpha=1, fill_alpha=0.5)
+    imma_view = CDSView(filter=BooleanFilter((protected_areas['ptype'] == 'imma').to_list()))
+    mpa_view = CDSView(filter=BooleanFilter((protected_areas['ptype'] == 'mpa').to_list()))
+    fig.patches('xs', 'ys', source=protected_source, fill_color='#ddd', line_alpha=1, fill_alpha=1,
+                view=imma_view)
+    fig.patches('xs', 'ys', source=protected_source, fill_color='lightskyblue', line_alpha=1, fill_alpha=1,
+                view=mpa_view)
 
 
 def zoom_to_bounds(fig, bounds):
