@@ -60,36 +60,6 @@ def load_whale_lines(filename, crs):
     return gpd.GeoDataFrame(results)
 
 
-def _clean_vessel_data(file_name):
-    """Procedure for cleaning and simplifying the input file 'data/vessels/AIS_3_29_filtered.gpkg'"""
-    gdf = gpd.read_file(file_name)
-
-    # Drop unwanted columns and rename for clarity
-    initial_columns = ['AIS_timest', 'Vessel_nam', 'Call_sign',
-                       # 'Length__me', 'Width__met', 'Orientatio', 'Speed__kno',  # May be interesting later
-                       'new_type', 'geometry']
-    rename_columns = {'AIS_timest': 'timestamp',
-                      # 'Length__me': 'length', 'Width__met': 'width',
-                      # 'Orientation': 'heading', 'Speed__kno': 'speed',  # May be interesting later
-                      'Vessel_nam': 'name', 'Call_sign': 'callsign', 'new_type': 'type'}
-    gdf = gdf[initial_columns].rename(columns=rename_columns)
-
-    # Some ships don't have call-signs, fill these in with truncated names
-    gdf.loc[gdf['callsign'].isna(), 'callsign'] = gdf.loc[gdf['callsign'].isna(), 'name'].str[:7]
-    gdf.loc[gdf['callsign'] == ' ', 'callsign'] = gdf.loc[gdf['callsign'] == ' ', 'name'].str[:7]
-    gdf.drop(columns=['name'], inplace=True)
-
-    # Sort by callsign and timestamp
-    gdf = (
-        gdf.sort_values(['callsign', 'timestamp'])
-        .reset_index(drop=True)
-    )
-
-    # Split by type and save the result
-    for vessel_type, group in gdf.groupby('type'):
-        group.reset_index(drop=True).to_file(f'data/vessels/{vessel_type}_points.gpkg', driver='GPKG')
-
-
 @memory.cache()
 def load_vessel_traces(file_name, crs):
     vessels = (
@@ -153,14 +123,16 @@ def load_protected_areas(bounds, crs):
 
 
 @memory.cache()
-def load_basemap(file_name, bounds, crs):
+def load_basemap(file_name, crs, bounds=None):
     basemap = (
         gpd.read_file(file_name)
         .to_crs(crs)    # Reproject
-        .clip(bounds)   # Clip to bounding box
         .drop(columns=['name', 'macronated', 'grp_macron', 'TARGET_FID', 'grp_ascii', 'grp_name', 'name_ascii'])
         .reset_index(drop=True)
     )
+
+    if bounds:
+        basemap = basemap.clip(bounds)   # Clip to bounding box
 
     # Drop small polygons
     basemap = basemap[basemap.area > 1500]
@@ -183,7 +155,8 @@ def load_all(crs=2193):
     protected_areas = load_protected_areas(bounds, crs=crs)
 
     # Coastlines from linz https://data.linz.govt.nz/layer/51153-nz-coastlines-and-islands-polygons-topo-150k/
-    basemap = load_basemap('data/linz_coastlines/nz-coastlines-and-islands-polygons-topo-150k.gpkg', bounds, crs=crs)
+    basemap = load_basemap('data/linz_coastlines/nz-coastlines-and-islands-polygons-topo-150k.gpkg',
+                           crs=crs, bounds=bounds)
 
     # Simplify vessel lines
     vessels['geometry'] = list(map(lambda x: x.simplify(100), vessels['geometry']))
