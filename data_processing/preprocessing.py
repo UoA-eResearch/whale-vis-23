@@ -4,7 +4,7 @@ import pandas as pd
 import geopandas as gpd
 import swifter
 
-from data_processing.load_data import load_vessel_points, load_basemap, reduce_poly_res
+from data_processing.load_data import load_vessel_points, load_basemap, reduce_poly_res, load_vessel_traces
 from data_processing.snaptocoast import internal_points_to_coast
 
 
@@ -48,11 +48,17 @@ def snap_vessels_to_coast():
     vessel_points = pd.concat(vessel_data_sets)
 
     # Snap points to coast
+    _, bounds = load_vessel_traces('data/vessels/fishing_all.gpkg', crs=2193)
     basemap = load_basemap('data/linz_coastlines/nz-coastlines-and-islands-polygons-topo-150k.gpkg',
-                                     crs=2193)
-    basemap = reduce_poly_res(basemap, 10)
+                           crs=2193, bounds=bounds).explode(index_parts=True)
+    basemap = reduce_poly_res(basemap, 10).reset_index(drop=True)
 
     fn = partial(internal_points_to_coast, coasts=basemap)
+    vessel_points = vessel_points.reset_index(drop=True)
     vessel_points = vessel_points['geometry'].swifter.apply(fn)
 
     vessel_points.to_file(path.join('data', 'vessels', 'vessel_points_coast.gpkg'), driver='GPKG')
+
+
+if __name__ == '__main__':
+    snap_vessels_to_coast()

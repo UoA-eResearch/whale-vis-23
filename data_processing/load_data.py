@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+import shapely
 import topojson as tp
 from joblib import Memory
 from shapely import LineString
@@ -131,8 +132,11 @@ def load_basemap(file_name, crs, bounds=None):
         .reset_index(drop=True)
     )
 
-    if bounds:
-        basemap = basemap.clip(bounds)   # Clip to bounding box
+    if bounds is not None:
+        # basemap = basemap.clip(bounds)   # Clip to bounding box
+        # Rather than clipping to bounds, exclude polygons outside bounds, but keep intersecting polygons unaltered
+        bbox = shapely.geometry.box(*bounds)
+        basemap = basemap[basemap.intersects(bbox)]
 
     # Drop small polygons
     basemap = basemap[basemap.area > 1500]
