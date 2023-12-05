@@ -140,7 +140,7 @@ def load_basemap(file_name, crs, bounds=None):
     return basemap
 
 
-def reducy_poly_res(gdf, tolerance):
+def reduce_poly_res(gdf, tolerance):
     """Reduce polygon resolution to reduce file size/plotting time"""
     topo = tp.Topology(gdf, prequantize=False)
     return topo.toposimplify(tolerance).to_gdf()
@@ -162,8 +162,8 @@ def load_all(crs=2193):
     vessels['geometry'] = list(map(lambda x: x.simplify(100), vessels['geometry']))
 
     # Simplify baselayer topologies
-    basemap = reducy_poly_res(basemap, 10)
-    protected_areas = reducy_poly_res(protected_areas, 10)
+    basemap = reduce_poly_res(basemap, 10)
+    protected_areas = reduce_poly_res(protected_areas, 10)
 
     # Snap trace points within land to nearest coast
     whales['geometry'] = whales['geometry'].progress_apply(internal_points_to_coast, coasts=basemap)

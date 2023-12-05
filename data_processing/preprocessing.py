@@ -4,7 +4,7 @@ import pandas as pd
 import geopandas as gpd
 import swifter
 
-from data_processing.load_data import load_vessel_points, load_basemap
+from data_processing.load_data import load_vessel_points, load_basemap, reduce_poly_res
 from data_processing.snaptocoast import internal_points_to_coast
 
 
@@ -50,6 +50,7 @@ def snap_vessels_to_coast():
     # Snap points to coast
     basemap = load_basemap('data/linz_coastlines/nz-coastlines-and-islands-polygons-topo-150k.gpkg',
                                      crs=2193)
+    basemap = reduce_poly_res(basemap, 10)
 
     fn = partial(internal_points_to_coast, coasts=basemap)
     vessel_points = vessel_points['geometry'].swifter.apply(fn)
