@@ -8,3 +8,4 @@ tqdm
 scipy
 joblib
 selenium
+swifter
