@@ -1,2 +1,2 @@
-data/vessels/*_points.gpkg filter=lfs diff=lfs merge=lfs -text
-data/vessels/*_all.gpkg filter=lfs diff=lfs merge=lfs -text
+data/vessels/*.gpkg filter=lfs diff=lfs merge=lfs -text
+
