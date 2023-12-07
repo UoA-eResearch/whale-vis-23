@@ -8,6 +8,17 @@ from bokeh.palettes import Viridis256, Inferno256, Bright5
 from plotting.annotations import north_arrow, scale_bar, date_annotation
 
 
+def _fig_size(bounds, plot_width=1200):
+    """Calculates figure size required to give square axes"""
+    data_width, data_height = bounds[2] - bounds[0], bounds[3] - bounds[1]
+    x_margin, y_margin = 164, 28
+
+    frame_width = plot_width - x_margin
+    frame_height = int(frame_width * data_height / data_width)
+
+    return plot_width, frame_height + y_margin
+
+
 def whale_colormap(whale_df):
     """Color whales by name"""
     whale_names = whale_df['name'].unique()
@@ -114,7 +125,8 @@ def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: 
                     protected_areas: GeoDataFrame, basemap: GeoDataFrame, bounds, max_dist=20000):
     """Produce a plot showing encounters between vessels & whales"""
     # Base figure containing basemap, MPAs, vessel & whale traces
-    fig = figure(width=1200, height=1200, output_backend='webgl', toolbar_location=None)
+    plot_width, plot_height = _fig_size(bounds)
+    fig = figure(width=plot_width, height=plot_height, output_backend='webgl', toolbar_location=None)
 
     # Add layers
     plot_protected_areas(fig, protected_areas)
@@ -161,7 +173,8 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp):
 
 def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap, bounds, timestamp):
     """Produce a plot showing the current location of vessels and whales"""
-    fig = figure(width=1200, height=1200, output_backend='webgl', toolbar_location=None)
+    plot_width, plot_height = _fig_size(bounds)
+    fig = figure(width=plot_width, height=plot_height, output_backend='webgl', toolbar_location=None)
 
     # Add layers
     plot_protected_areas(fig, protected_areas)
