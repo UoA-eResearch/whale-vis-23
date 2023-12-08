@@ -1,5 +1,5 @@
 import pandas as pd
-from shapely import LineString, Point, Polygon
+from shapely import LineString, Point, Polygon, MultiPolygon
 from tqdm import tqdm
 
 
@@ -31,5 +31,7 @@ def fix_dateline(geom):
         return Point((geom.x + 360, geom.y)) if geom.x < 0 else geom
     elif isinstance(geom, Polygon):
         return Polygon([(x + 360, y) if x < 0 else (x, y) for x, y in geom.exterior.coords])
+    elif isinstance(geom, MultiPolygon):
+        return MultiPolygon([fix_dateline(p) for p in geom.geoms])
     else:
         raise ValueError(f'Unexpected geometry type: {type(geom)}')
