@@ -4,7 +4,7 @@ import geopandas as gpd
 from tqdm.contrib.concurrent import process_map
 from pathlib import Path
 
-from data_processing.load_data import load_vessel_points, load_basemap, reduce_poly_res, load_vessel_traces
+from data_processing.load_data import load_vessel_points, load_basemap, reduce_poly_res, load_vessel_traces, load_whales
 from data_processing.snaptocoast import internal_points_to_coast
 
 
@@ -38,14 +38,9 @@ def clean_vessel_data(file_name):
         group.reset_index(drop=True).to_file(f'data/vessels/{vessel_type}_points.gpkg', driver='GPKG')
 
 
-def snap_points_to_coast(input_file, output_file):
+def snap_points_to_coast(input_gdf, output_file):
     """Load all vessel data, snap to coast, and save pre-processed data"""
-    assert path.isfile(input_file), f'Input file {input_file} does not exist'
     assert not path.isfile(output_file), f'Output file {output_file} already exists'
-
-    # Vessel points, interpolated to 10 minutes, for calculating encounters
-    points_df = load_vessel_points(input_file, 2193)
-
     # Load coastline
     _, bounds = load_vessel_traces('data/vessels/fishing_all.gpkg', crs=2193)
     basemap = load_basemap('data/linz_coastlines/nz-coastlines-and-islands-polygons-topo-150k.gpkg',
@@ -57,9 +52,9 @@ def snap_points_to_coast(input_file, output_file):
     # Snap points to coast
     fn = partial(internal_points_to_coast, coasts=basemap)
     # points_df = points_df.reset_index(drop=True)
-    points_df['geometry'] = process_map(fn, points_df['geometry'], chunksize=10000)
+    input_gdf['geometry'] = process_map(fn, input_gdf['geometry'], chunksize=10000)
 
-    points_df.to_file(output_file, driver='GPKG')
+    input_gdf.to_file(output_file, driver='GPKG')
 
 
 if __name__ == '__main__':
@@ -69,5 +64,16 @@ if __name__ == '__main__':
                          vessel_type in ['Fishing', 'Other', 'Cargo', 'Passenger', 'Tanker']]
 
     for input_file, output_file in vessel_data_files:
+        if path.isfile(output_file):
+            continue
         print(f'Processing {input_file}')
-        snap_points_to_coast(input_file, output_file)
+        points_df = load_vessel_points(input_file, 2193)
+        snap_points_to_coast(points_df, output_file)
+
+    # Whale data
+    output_file = 'data/whales/whales_coast.gpkg'
+    if not path.isfile(output_file):
+        print('Processing whales file')
+        _, bounds = load_vessel_traces('data/vessels/fishing_all.gpkg', crs=2193)
+        whales_interp = load_whales('data/whales/df_all_3.csv', bounds, 2193, 10)
+        snap_points_to_coast(whales_interp, output_file)
