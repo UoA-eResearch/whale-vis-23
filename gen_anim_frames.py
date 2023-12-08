@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     # Load vessel points
     vessel_data_files = [path.join('data', 'vessels', f'{vessel_type}_points_coast.gpkg') for vessel_type in ['Fishing', 'Other', 'Cargo', 'Passenger', 'Tanker']]
-    vessel_data_sets = [load_data.load_vessel_points(vdf, 2193) for vdf in vessel_data_files]
+    vessel_data_sets = [gpd.read_file(vdf) for vdf in vessel_data_files]
 
     vessel_points = pd.concat(vessel_data_sets)
 

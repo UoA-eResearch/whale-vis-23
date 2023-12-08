@@ -140,7 +140,7 @@ def load_basemap(file_name, crs, bounds=None):
     # Drop small polygons
     basemap = basemap[basemap.area > 1500]
 
-    return basemap
+    return basemap.explode(index_parts=False).reset_index()
 
 
 def reduce_poly_res(gdf, tolerance):
