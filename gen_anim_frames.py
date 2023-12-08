@@ -1,11 +1,11 @@
 import os
 from os import path
 import pandas as pd
+import geopandas as gpd
 
 from bokeh.io import export_png
 
 from data_processing import load_data
-from data_processing.snaptocoast import internal_points_to_coast
 from plotting import heatmap
 from plotting.util import fix_dateline
 
@@ -14,16 +14,13 @@ if __name__ == '__main__':
     whales, vessels, protected_areas, basemap, bounds = load_data.load_all()
 
     # Load vessel points
-    vessel_data_files = [path.join('data', 'vessels', f'{vessel_type}_points.gpkg') for vessel_type in ['Fishing', 'Other', 'Cargo', 'Passenger', 'Tanker']]
+    vessel_data_files = [path.join('data', 'vessels', f'{vessel_type}_points_coast.gpkg') for vessel_type in ['Fishing', 'Other', 'Cargo', 'Passenger', 'Tanker']]
     vessel_data_sets = [load_data.load_vessel_points(vdf, 2193) for vdf in vessel_data_files]
 
     vessel_points = pd.concat(vessel_data_sets)
 
-    vessel_points['geometry'] = vessel_points['geometry'].progress_apply(internal_points_to_coast, coasts=basemap)
-
     # Load whale points
-    whales_interp = load_data.load_whales('data/whales/df_all_3.csv', vessel_points.geometry.total_bounds, 2193, 10)
-    whales_interp['geometry'] = whales_interp['geometry'].progress_apply(internal_points_to_coast, coasts=basemap)
+    whales_interp = gpd.read_file('data/whales/whales_coast.gpkg')
 
     # Set up timestamps
     start = '2022-08-01'

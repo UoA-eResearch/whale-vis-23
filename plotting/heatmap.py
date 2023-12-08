@@ -19,6 +19,15 @@ def _fig_size(bounds, plot_width=1200):
     return plot_width, frame_height + y_margin
 
 
+def _fade(ts, plot_ts, cutoff):
+    """Quad ease out fade function, based on how long since point was plotted"""
+    diff = (ts - plot_ts).total_seconds()
+    if diff > cutoff:
+        return 0
+    else:
+        return 1 - (diff / cutoff) ** 4
+
+
 def whale_colormap(whale_df):
     """Color whales by name"""
     whale_names = whale_df['name'].unique()
@@ -29,12 +38,13 @@ def whale_colormap(whale_df):
 
 def plot_whale_pts(fig: figure, whale_df: GeoDataFrame, timestamp: datetime = None):
     """Add whale points to plot, optionally up to a given timestamp"""
+    whale_df['fade'] = whale_df['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14*24*3600)
     whale_source = GeoJSONDataSource(geojson=whale_df.to_json(default=str))
     cmapper = whale_colormap(whale_df)
 
     if timestamp:
         whale_view = CDSView(filter=BooleanFilter((whale_df['timestamp'] < timestamp).to_list()))
-        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5,
+        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha='fade',
                     view=whale_view)
     else:
         fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5)
@@ -160,12 +170,13 @@ def plot_location(fig, vessel_pts_df, whale_pts_df, timestamp):
 def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp):
     """Plot vessel traces up to a given timestamp"""
     vessel_data = vessels_pts_df[vessels_pts_df['timestamp'] <= timestamp]
+    vessel_data['fade'] = vessel_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
 
     # TODO: consider building CDS for each callsign and streaming data in
     vessel_colors = {t: c for t, c in zip(vessels_pts_df['type'].unique(), Bright5)}
     for callsign, group in vessel_data.groupby('callsign'):
         vtype = group.iloc[0]['type']
-        fig.line(group.geometry.x, group.geometry.y, color=vessel_colors[vtype], line_width=1, line_alpha=0.5,
+        fig.line(group.geometry.x, group.geometry.y, color=vessel_colors[vtype], line_width=1, line_alpha='fade',
                  legend_label=vtype)
 
     fig.legend.location = 'bottom_left'
