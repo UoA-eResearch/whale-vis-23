@@ -19,7 +19,7 @@ def date_annotation(figure: Plot, date: datetime, x_pos=0.9, y_pos=0.95, text_si
     figure.add_layout(date_label)
 
 
-def north_arrow(figure: Plot, x_pos=0.05, y_pos=0.93, arrow_size=30, text_size=20):
+def north_arrow(figure: Plot, x_pos=0.05, y_pos=0.95, arrow_size=30, text_size=20):
     """Add a north arrow to a map figure"""
     # North arrow
     xs = np.array([0, .5, 1, .5])
@@ -31,7 +31,7 @@ def north_arrow(figure: Plot, x_pos=0.05, y_pos=0.93, arrow_size=30, text_size=2
     ys *= arrow_size
     # Place on the figure
     abs_x_pos = x_pos * figure.width
-    abs_y_pos = y_pos * figure.height
+    abs_y_pos = y_pos * figure.height - arrow_size
     xs += abs_x_pos
     ys += abs_y_pos
 
@@ -46,7 +46,7 @@ def north_arrow(figure: Plot, x_pos=0.05, y_pos=0.93, arrow_size=30, text_size=2
     figure.add_layout(northLetter)
 
 
-def scale_bar(figure: Plot, halved=False):
+def scale_bar(figure: Plot, halved=False, convert_from_deg=False):
     """Add a scale bar to a map figure"""
     # Style either half black/white, or solid black
     # Recommend not using halved because the line needed around the outside edge is on the outside of the bar, making it
@@ -71,11 +71,28 @@ def scale_bar(figure: Plot, halved=False):
     # JS code that calculates an appropriate length for the bar (2 s.f.), places it
     # then places the label and updates it's text
     slider_callback = CustomJS(
-        args={'sb': [scalebar_h0, scalebar_h1], 'sl': scalebar_l, 'x': figure.x_range, 'y': figure.y_range}, code='''
+        args={'sb': [scalebar_h0, scalebar_h1], 'sl': scalebar_l, 'x': figure.x_range, 'y': figure.y_range}, code=f'''
     const lerp = (a, b, v) => a + v * (b - a);
     const [x0, x1, y0, y1] = [x.start, x.end, y.start, y.end]
 
     let width = (0.2 * (x1-x0)).toPrecision(2)
+
+    function haversine_distance(lat1, lon1, lat2, lon2) {{
+        const R = 6371e3; // metres
+        const la1 = lat1 * Math.PI/180; // convert to radians
+        const la2 = lat2 * Math.PI/180;
+        const dlat = (lat2-lat1) * Math.PI/180;
+        const dlon = (lon2-lon1) * Math.PI/180;
+
+        const a = Math.sin(dlat/2) * Math.sin(dlat/2) +
+                  Math.cos(la1) * Math.cos(la2) *
+                  Math.sin(dlon/2) * Math.sin(dlon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c;
+    }}
+    
+    let width_text = {'haversine_distance(y0, x1 - width, y0, x1).toPrecision(2)' if convert_from_deg else 'width'};
 
     let right = lerp(x0, x1, 0.95);
     let left = right - width;
@@ -95,11 +112,11 @@ def scale_bar(figure: Plot, halved=False):
 
     sl.x = right;
     sl.y = bottom;
-    if (width > 10000) {
-        sl.text = `${width / 1000} km`
-    } else {
-        sl.text = `${Number(width)} m`
-    }
+    if (width_text > 10000) {{
+        sl.text = `${{width_text / 1000}} km`
+    }} else {{
+        sl.text = `${{Number(width_text)}} m`
+    }}
     ''')
 
     figure.x_range.js_on_change('start', slider_callback)

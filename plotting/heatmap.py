@@ -94,7 +94,7 @@ def traces_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas:
 
     # Add annotations
     north_arrow(fig)
-    scale_bar(fig)
+    scale_bar(fig, convert_from_deg=whale_df.crs.equals(4326))
 
     zoom_to_bounds(fig, bounds)
 
@@ -137,7 +137,7 @@ def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: 
 
     # Add annotations
     north_arrow(fig)
-    scale_bar(fig)
+    scale_bar(fig, convert_from_deg=whale_df.crs.equals(4326))
 
     zoom_to_bounds(fig, bounds)
 
@@ -185,7 +185,7 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap, bounds,
 
     # Add annotations
     north_arrow(fig)
-    scale_bar(fig)
+    scale_bar(fig, convert_from_deg=whales_df.crs.equals(4326))
     date_annotation(fig, timestamp)
 
     zoom_to_bounds(fig, bounds)

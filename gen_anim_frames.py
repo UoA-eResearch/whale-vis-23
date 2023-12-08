@@ -7,6 +7,7 @@ from bokeh.io import export_png
 from data_processing import load_data
 from data_processing.snaptocoast import internal_points_to_coast
 from plotting import heatmap
+from plotting.util import fix_dateline
 
 if __name__ == '__main__':
     # Load base data
@@ -31,6 +32,18 @@ if __name__ == '__main__':
 
     whale_mask = (whales_interp.timestamp >= start) & (whales_interp.timestamp < end)
     vessel_mask = (vessel_points.timestamp >= start) & (vessel_points.timestamp < end)
+
+    # Convert all gdfs to lat/long
+    whales_interp = whales_interp.to_crs(4326)
+    vessel_points = vessel_points.to_crs(4326)
+    protected_areas = protected_areas.to_crs(4326)
+    basemap = basemap.to_crs(4326)
+    bounds = vessel_points.geometry.total_bounds
+
+    whales_interp.geometry = whales_interp.geometry.apply(fix_dateline)
+    vessel_points.geometry = vessel_points.geometry.apply(fix_dateline)
+    protected_areas.geometry = protected_areas.geometry.apply(fix_dateline)
+    basemap.geometry = basemap.geometry.apply(fix_dateline)
 
     # Generate frames
     os.makedirs('frames', exist_ok=True)

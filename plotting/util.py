@@ -1,5 +1,5 @@
 import pandas as pd
-from shapely import LineString
+from shapely import LineString, Point, Polygon
 from tqdm import tqdm
 
 
@@ -21,3 +21,15 @@ def points_to_segments(gdf, grouper):
     out['timestamp'] = out['timestamp'].astype('int64') // 10 ** 9
 
     return out
+
+
+def fix_dateline(geom):
+    """Apply to a gdf column to fix points that cross the dateline"""
+    if isinstance(geom, LineString):
+        return LineString([(x + 360, y) if x < 0 else (x, y) for x, y in geom.coords])
+    elif isinstance(geom, Point):
+        return Point((geom.x + 360, geom.y)) if geom.x < 0 else geom
+    elif isinstance(geom, Polygon):
+        return Polygon([(x + 360, y) if x < 0 else (x, y) for x, y in geom.exterior.coords])
+    else:
+        raise ValueError(f'Unexpected geometry type: {type(geom)}')
