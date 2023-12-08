@@ -7,7 +7,6 @@ from joblib import Memory
 from shapely import LineString
 
 from data_processing.interpolation import interpolate_trace
-from data_processing.snaptocoast import internal_points_to_coast
 
 memory = Memory('cache_data/', verbose=1)
 
@@ -168,8 +167,5 @@ def load_all(crs=2193):
     # Simplify baselayer topologies
     basemap = reduce_poly_res(basemap, 10)
     protected_areas = reduce_poly_res(protected_areas, 10)
-
-    # Snap trace points within land to nearest coast
-    whales['geometry'] = whales['geometry'].progress_apply(internal_points_to_coast, coasts=basemap)
 
     return whales, vessels, protected_areas, basemap, bounds
