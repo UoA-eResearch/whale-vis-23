@@ -57,7 +57,7 @@ def load_whale_lines(filename, crs):
                'geometry': LineString(group['geometry'].tolist())}
         results.append(res)
 
-    return gpd.GeoDataFrame(results)
+    return gpd.GeoDataFrame(results, crs=crs)
 
 
 @memory.cache()

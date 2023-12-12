@@ -7,6 +7,7 @@ from bokeh.io import export_png
 
 from data_processing import load_data
 from plotting import heatmap
+from plotting.heatmap import zoom_to_bounds
 from plotting.util import fix_dateline
 
 if __name__ == '__main__':
@@ -35,7 +36,10 @@ if __name__ == '__main__':
     vessel_points = vessel_points.to_crs(4326)
     protected_areas = protected_areas.to_crs(4326)
     basemap = basemap.to_crs(4326)
-    bounds = vessel_points.geometry.total_bounds
+    bounds_full = vessel_points.geometry.total_bounds
+    bounds_ant = [177.5, -51, 180, -47]
+    bounds_auck = [165, -52, 169, -49]
+    bounds_camp = [168, -53, 171, -51]
 
     whales_interp.geometry = whales_interp.geometry.apply(fix_dateline)
     vessel_points.geometry = vessel_points.geometry.apply(fix_dateline)
@@ -47,5 +51,9 @@ if __name__ == '__main__':
     for i, ts in enumerate(timestamps):
         print(i)
         fig = heatmap.animation_frame(whales_interp[whale_mask], vessel_points[vessel_mask],
-                                      protected_areas, basemap, bounds, ts)
-        export_png(fig, filename=f'frames/frame_{i:04d}.png')
+                                      protected_areas, basemap, bounds_full, ts)
+        export_png(fig, filename=f'frames/frame_full_{i:04d}.png')
+
+        for label, bds in zip(['anti', 'auck', 'camp'], [bounds_ant, bounds_auck, bounds_camp]):
+            zoom_to_bounds(fig, bds)
+            export_png(fig, filename=f'frames/frame_{label}_{i:04d}.png')
