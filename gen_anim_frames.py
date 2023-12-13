@@ -24,26 +24,32 @@ if __name__ == '__main__':
     whales_interp = gpd.read_file('data/whales/whales_coast.gpkg')
 
     # Set up timestamps
-    ranges = [('2020-07-01', '2023-06-01'),
-              ('2020-07-01', '2021-06-01'),
-              ('2021-07-01', '2022-06-01'),
-              ('2022-07-01', '2023-06-01')]
-    range_labels = ['full', '2020', '2021', '2022']
+    # ranges = [('2020-07-01', '2023-06-01'),
+    #           ('2020-07-01', '2021-06-01'),
+    #           ('2021-07-01', '2022-06-01'),
+    #           ('2022-07-01', '2023-06-01')]
+    # range_labels = ['full', '2020', '2021', '2022']
+    #
+    # timestamps = {
+    #     label: pd.date_range(start, end, freq='30min')
+    #     for label, (start, end) in zip(range_labels, ranges)
+    # }
+    #
+    # whale_mask = {
+    #     label: (whales_interp.timestamp >= start) & (whales_interp.timestamp < end)
+    #     for label, (start, end) in zip(range_labels, ranges)
+    # }
+    #
+    # vessel_mask = {
+    #     label: (vessel_points.timestamp >= start) & (vessel_points.timestamp < end)
+    #     for label, (start, end) in zip(range_labels, ranges)
+    # }
 
-    timestamps = {
-        label: pd.date_range(start, end, freq='30min')
-        for label, (start, end) in zip(range_labels, ranges)
-    }
-
-    whale_mask = {
-        label: (whales_interp.timestamp >= start) & (whales_interp.timestamp < end)
-        for label, (start, end) in zip(range_labels, ranges)
-    }
-
-    vessel_mask = {
-        label: (vessel_points.timestamp >= start) & (vessel_points.timestamp < end)
-        for label, (start, end) in zip(range_labels, ranges)
-    }
+    start = '2020-07-01'
+    end = '2023-06-01'
+    timestamps = pd.date_range(start, end, freq='30min')
+    whale_mask = (whales_interp.timestamp >= start) & (whales_interp.timestamp < end)
+    vessel_mask = (vessel_points.timestamp >= start) & (vessel_points.timestamp < end)
 
     # Convert all gdfs to lat/long
     whales_interp = whales_interp.to_crs(4326)
@@ -62,10 +68,10 @@ if __name__ == '__main__':
 
     # Generate frames
     os.makedirs('frames', exist_ok=True)
-    for ts_label, ts_range in timestamps.items():
-        for i, ts in enumerate(ts_range):
-            for bds_label, bds in zip(['full', 'anti', 'auck', 'camp'], [bounds_full, bounds_ant, bounds_auck, bounds_camp]):
-                print(ts_label, bds_label, i)
-                fig = heatmap.animation_frame(whales_interp[whale_mask[ts_label]], vessel_points[vessel_mask[ts_label]],
-                                              protected_areas, basemap, bds, ts)
-                export_png(fig, filename=f'frames/frame_{ts_label}_{bds_label}_{i:04d}.png')
+    # for ts_label, ts_range in timestamps.items():
+    for i, ts in enumerate(timestamps):
+        for bds_label, bds in zip(['full', 'anti', 'auck', 'camp'], [bounds_full, bounds_ant, bounds_auck, bounds_camp]):
+            print(bds_label, i)
+            fig = heatmap.animation_frame(whales_interp[whale_mask], vessel_points[vessel_mask],
+                                          protected_areas, basemap, bds, ts)
+            export_png(fig, filename=f'frames/frame_{bds_label}_{i:04d}.png')
