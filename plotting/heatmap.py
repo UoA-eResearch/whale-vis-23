@@ -39,20 +39,18 @@ def whale_colormap(whale_df):
 
 def plot_whale_pts(fig: figure, whale_df: GeoDataFrame, timestamp: datetime = None):
     """Add whale points to plot, optionally up to a given timestamp"""
-    # whale_df['fade'] = whale_df['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14*24*3600)
-    whale_source = GeoJSONDataSource(geojson=whale_df.to_json(default=str))
     cmapper = whale_colormap(whale_df)
+    cmap = {t: c for t, c in zip(whale_df['name'].unique(), cmapper.palette)}
 
     if timestamp:
         mask = whale_df['timestamp'] <= timestamp
         mask &= (timestamp - timedelta(days=14)) < whale_df['timestamp']
         if mask.sum() == 0:
             return
-        whale_view = CDSView(filter=BooleanFilter(mask.to_list()))
-        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5,
-                    view=whale_view)
+        for name, group in whale_df[mask].groupby('name'):
+            fig.scatter(group.geometry.x, group.geometry.y, color=cmap[name], fill_alpha=0.5)
     else:
-        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5)
+        fig.scatter('x', 'y', source=whale_df, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5)
 
 
 def plot_whale_lines(fig: figure, whale_df: GeoDataFrame):
@@ -71,10 +69,9 @@ def plot_vessel_traces(fig: figure, vessel_df: GeoDataFrame):
     fig.multi_line('xs', 'ys', source=vessel_source, color='gray', line_width=1, line_alpha=0.05)
 
 
-def plot_basemap(fig: figure, basemap: GeoDataFrame):
+def plot_basemap(fig: figure, basemap: GeoJSONDataSource):
     """Add basemap (coast outline) to plot"""
-    basemap_source = GeoJSONDataSource(geojson=basemap.to_json())
-    fig.patches('xs', 'ys', source=basemap_source, fill_color='lightgreen', line_alpha=1, fill_alpha=1)
+    fig.patches('xs', 'ys', source=basemap, fill_color='lightgreen', line_alpha=1, fill_alpha=1)
 
 
 def plot_protected_areas(fig: figure, protected_areas: GeoDataFrame):
@@ -191,7 +188,7 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp):
     fig.legend.location = 'bottom_left'
 
 
-def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap, bounds, timestamp):
+def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bounds, timestamp):
     """Produce a plot showing the current location of vessels and whales"""
     plot_width, plot_height = _fig_size(bounds)
     fig = figure(width=plot_width, height=plot_height, output_backend='webgl', toolbar_location=None)
@@ -204,7 +201,7 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap, bounds,
     with timer('plot_whale_pts'):
         plot_whale_pts(fig, whales_df, timestamp)
     with timer('plot_basemap'):
-        plot_basemap(fig, basemap)
+        plot_basemap(fig, basemap_src)
     with timer('plot_location'):
         plot_location(fig, vessels_pts_df, whales_df, timestamp)
 

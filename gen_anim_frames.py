@@ -4,6 +4,7 @@ import pandas as pd
 import geopandas as gpd
 
 from bokeh.io import export_png
+from bokeh.models import GeoJSONDataSource
 from tqdm import tqdm
 
 from data_processing import load_data
@@ -67,14 +68,15 @@ if __name__ == '__main__':
     protected_areas.geometry = protected_areas.geometry.apply(fix_dateline)
     basemap.geometry = basemap.geometry.apply(fix_dateline)
 
+    basemap_src = GeoJSONDataSource(geojson=basemap.to_json(default=str))
+
     # Generate frames
     os.makedirs('frames', exist_ok=True)
-    # for ts_label, ts_range in timestamps.items():
     for i, ts in enumerate(timestamps):
-        for bds_label, bds in zip(['full', 'anti', 'auck', 'camp'], [bounds_full, bounds_ant, bounds_auck, bounds_camp]):
+        for bds_label, bds in zip(['full', 'auck', 'camp'], [bounds_full, bounds_auck, bounds_camp]):
             print(bds_label, i)
             with timer('Generate frame'):
                 fig = heatmap.animation_frame(whales_interp[whale_mask], vessel_points[vessel_mask],
-                                              protected_areas, basemap, bds, ts)
+                                              protected_areas, basemap_src, bds, ts)
             with timer('Export frame'):
                 export_png(fig, filename=f'frames/frame_{bds_label}_{i:04d}.png')
