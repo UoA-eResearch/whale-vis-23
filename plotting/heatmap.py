@@ -191,7 +191,7 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp):
 def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bounds, timestamp):
     """Produce a plot showing the current location of vessels and whales"""
     plot_width, plot_height = _fig_size(bounds)
-    fig = figure(width=plot_width, height=plot_height, output_backend='webgl', toolbar_location=None)
+    fig = figure(width=plot_width, height=plot_height, toolbar_location=None)
 
     # Add layers
     with timer('plot_protected_areas'):
