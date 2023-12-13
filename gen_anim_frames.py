@@ -4,11 +4,12 @@ import pandas as pd
 import geopandas as gpd
 
 from bokeh.io import export_png
+from tqdm import tqdm
 
 from data_processing import load_data
 from plotting import heatmap
 from plotting.util import fix_dateline
-
+from utils import timer
 
 if __name__ == '__main__':
     # Load base data
@@ -16,7 +17,7 @@ if __name__ == '__main__':
 
     # Load vessel points
     vessel_data_files = [path.join('data', 'vessels', f'{vessel_type}_points_coast.gpkg') for vessel_type in ['Fishing', 'Other', 'Cargo', 'Passenger', 'Tanker']]
-    vessel_data_sets = [gpd.read_file(vdf) for vdf in vessel_data_files]
+    vessel_data_sets = [gpd.read_file(vdf) for vdf in tqdm(vessel_data_files, desc="Loading vessel data")]
 
     vessel_points = pd.concat(vessel_data_sets)
 
@@ -72,6 +73,8 @@ if __name__ == '__main__':
     for i, ts in enumerate(timestamps):
         for bds_label, bds in zip(['full', 'anti', 'auck', 'camp'], [bounds_full, bounds_ant, bounds_auck, bounds_camp]):
             print(bds_label, i)
-            fig = heatmap.animation_frame(whales_interp[whale_mask], vessel_points[vessel_mask],
-                                          protected_areas, basemap, bds, ts)
-            export_png(fig, filename=f'frames/frame_{bds_label}_{i:04d}.png')
+            with timer('Generate frame'):
+                fig = heatmap.animation_frame(whales_interp[whale_mask], vessel_points[vessel_mask],
+                                              protected_areas, basemap, bds, ts)
+            with timer('Export frame'):
+                export_png(fig, filename=f'frames/frame_{bds_label}_{i:04d}.png')

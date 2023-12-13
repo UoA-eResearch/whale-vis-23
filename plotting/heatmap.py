@@ -6,6 +6,7 @@ from bokeh.plotting import figure
 from bokeh.palettes import Viridis256, Inferno256, Bright5
 
 from plotting.annotations import north_arrow, scale_bar, date_annotation
+from utils import timer
 
 
 def _fig_size(bounds, plot_width=1200):
@@ -196,11 +197,16 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap, bounds,
     fig = figure(width=plot_width, height=plot_height, output_backend='webgl', toolbar_location=None)
 
     # Add layers
-    plot_protected_areas(fig, protected_areas)
-    plot_partial_vessel_traces(fig, vessels_pts_df, timestamp)
-    plot_whale_pts(fig, whales_df, timestamp)
-    plot_basemap(fig, basemap)
-    plot_location(fig, vessels_pts_df, whales_df, timestamp)
+    with timer('plot_protected_areas'):
+        plot_protected_areas(fig, protected_areas)
+    with timer('plot_partial_vessel_traces'):
+        plot_partial_vessel_traces(fig, vessels_pts_df, timestamp)
+    with timer('plot_whale_pts'):
+        plot_whale_pts(fig, whales_df, timestamp)
+    with timer('plot_basemap'):
+        plot_basemap(fig, basemap)
+    with timer('plot_location'):
+        plot_location(fig, vessels_pts_df, whales_df, timestamp)
 
     # Add annotations
     north_arrow(fig)
