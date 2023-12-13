@@ -165,8 +165,9 @@ def plot_location(fig, vessel_pts_df, whale_pts_df, timestamp):
 
     if (vessel_pts_df['timestamp'] == timestamp).sum() > 0:
         vessel_data = vessel_pts_df[vessel_pts_df['timestamp'] == timestamp]
-        vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json(default=str))
-        fig.scatter('x', 'y', source=vessel_source, color='gray', fill_alpha=1, size=5, line_color=None)
+        vessel_colors = {t: c for t, c in zip(vessel_data['type'].unique(), Bright5)}
+        for vtype, group in vessel_data.groupby('type'):
+            fig.scatter(group.geometry.x, group.geometry.y, color=vessel_colors[vtype], fill_alpha=1, size=5)
 
 
 def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp):
@@ -186,6 +187,13 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp):
                  legend_label=vtype)
 
     fig.legend.location = 'bottom_left'
+    # Include all vessel types in legend
+    legend_dummies = {
+        label: fig.line([0,0], [0,0], color=vessel_colors[label], line_width=2, line_alpha=0.5)
+        for label in vessel_colors.keys()
+    }
+
+    fig.legend.items = [(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()]
 
 
 def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bounds, timestamp):
