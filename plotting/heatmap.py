@@ -45,6 +45,8 @@ def plot_whale_pts(fig: figure, whale_df: GeoDataFrame, timestamp: datetime = No
     if timestamp:
         mask = whale_df['timestamp'] <= timestamp
         mask &= (timestamp - timedelta(days=14)) < whale_df['timestamp']
+        if mask.sum() == 0:
+            return
         whale_view = CDSView(filter=BooleanFilter(mask.to_list()))
         fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5,
                     view=whale_view)
@@ -79,9 +81,9 @@ def plot_protected_areas(fig: figure, protected_areas: GeoDataFrame):
     protected_source = GeoJSONDataSource(geojson=protected_areas.to_json())
     imma_view = CDSView(filter=BooleanFilter((protected_areas['ptype'] == 'imma').to_list()))
     mpa_view = CDSView(filter=BooleanFilter((protected_areas['ptype'] == 'mpa').to_list()))
-    fig.patches('xs', 'ys', source=protected_source, fill_color='#ddd', line_alpha=1, fill_alpha=1,
+    fig.patches('xs', 'ys', source=protected_source, fill_color='#ddd', line_alpha=1, fill_alpha=0.8,
                 view=imma_view)
-    fig.patches('xs', 'ys', source=protected_source, fill_color='lightskyblue', line_alpha=1, fill_alpha=1,
+    fig.patches('xs', 'ys', source=protected_source, fill_color='lightskyblue', line_alpha=1, fill_alpha=0.8,
                 view=mpa_view)
 
 
@@ -157,22 +159,24 @@ def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: 
 
 
 def plot_location(fig, vessel_pts_df, whale_pts_df, timestamp):
-    vessel_data = vessel_pts_df[vessel_pts_df['timestamp'] == timestamp]
-    whale_data = whale_pts_df[whale_pts_df['timestamp'] == timestamp]
+    if (whale_pts_df['timestamp'] == timestamp).sum() > 0:
+        cmapper = whale_colormap(whale_pts_df)
+        whale_data = whale_pts_df[whale_pts_df['timestamp'] == timestamp]
+        whale_source = GeoJSONDataSource(geojson=whale_data.to_json(default=str))
+        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=1, size=10)
 
-    cmapper = whale_colormap(whale_pts_df)
-
-    vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json(default=str))
-    whale_source = GeoJSONDataSource(geojson=whale_data.to_json(default=str))
-
-    fig.scatter('x', 'y', source=vessel_source, color='gray', fill_alpha=1, size=5, line_color=None)
-    fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=1, size=10)
+    if (vessel_pts_df['timestamp'] == timestamp).sum() > 0:
+        vessel_data = vessel_pts_df[vessel_pts_df['timestamp'] == timestamp]
+        vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json(default=str))
+        fig.scatter('x', 'y', source=vessel_source, color='gray', fill_alpha=1, size=5, line_color=None)
 
 
 def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp):
     """Plot vessel traces up to a given timestamp"""
     mask = vessels_pts_df['timestamp'] <= timestamp
     mask &= vessels_pts_df['timestamp'] > (timestamp - timedelta(days=14))
+    if mask.sum() == 0:
+        return
     vessel_data = vessels_pts_df[mask]
     # vessel_data['fade'] = vessel_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
 
