@@ -15,9 +15,12 @@ def _fig_size(bounds, plot_width=1200):
     x_margin, y_margin = 164, 28
 
     frame_width = plot_width - x_margin
-    frame_height = int(frame_width * data_height / data_width)
+    frame_height = int(frame_width * data_height / data_width) + y_margin
 
-    return plot_width, frame_height + y_margin
+    if frame_height % 2 == 1:
+        frame_height += 1
+
+    return plot_width, frame_height
 
 
 def _fade(ts, plot_ts, cutoff):

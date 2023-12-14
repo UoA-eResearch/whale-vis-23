@@ -11,8 +11,16 @@ from data_processing import load_data
 from plotting import heatmap
 from plotting.util import fix_dateline
 from utils import timer
+import argparse
+
 
 if __name__ == '__main__':
+    # Get bounds name from argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('bounds', type=str, choices=['full', 'auck', 'camp', 'anti'])
+    args = parser.parse_args()
+    bname = args.bounds
+
     # Load base data
     whales, vessels, protected_areas, basemap, bounds = load_data.load_all()
 
@@ -70,13 +78,23 @@ if __name__ == '__main__':
 
     basemap_src = GeoJSONDataSource(geojson=basemap.to_json(default=str))
 
+    bds = {
+        'full': bounds_full,
+        'auck': bounds_auck,
+        'camp': bounds_camp,
+        'anti': bounds_ant,
+    }[bname]
+
     # Generate frames
     os.makedirs('frames', exist_ok=True)
     for i, ts in enumerate(timestamps):
-        for bds_label, bds in zip(['full', 'auck', 'camp'], [bounds_full, bounds_auck, bounds_camp]):
-            print(bds_label, i)
-            with timer('Generate frame'):
-                fig = heatmap.animation_frame(whales_interp[whale_mask], vessel_points[vessel_mask],
-                                              protected_areas, basemap_src, bds, ts)
-            with timer('Export frame'):
-                export_png(fig, filename=f'frames/frame_{bds_label}_{i:04d}.png')
+        print(bname, i)
+        fname = f'frames/frame_{bname}_{i:04d}.png'
+        if path.isfile(fname):
+            continue
+
+        with timer('Generate frame'):
+            fig = heatmap.animation_frame(whales_interp[whale_mask], vessel_points[vessel_mask],
+                                          protected_areas, basemap_src, bds, ts)
+        with timer('Export frame'):
+            export_png(fig, filename=fname)
