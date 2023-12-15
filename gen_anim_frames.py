@@ -3,7 +3,7 @@ from os import path
 import pandas as pd
 import geopandas as gpd
 
-from bokeh.io import export_png
+from bokeh.io import export_png, webdriver
 from bokeh.models import GeoJSONDataSource
 from tqdm import tqdm
 
@@ -89,12 +89,19 @@ if __name__ == '__main__':
     os.makedirs('frames', exist_ok=True)
     for i, ts in enumerate(timestamps):
         print(bname, i)
-        fname = f'frames/frame_{bname}_{i:04d}.png'
-        if path.isfile(fname):
-            continue
+        with timer('Full frame'):
+            fname = f'frames/frame_{bname}_{i:04d}.png'
+            if path.isfile(fname):
+                continue
 
-        with timer('Generate frame'):
-            fig = heatmap.animation_frame(whales_interp[whale_mask], vessel_points[vessel_mask],
-                                          protected_areas, basemap_src, bds, ts)
-        with timer('Export frame'):
-            export_png(fig, filename=fname)
+            with timer('Generate frame'):
+                fig = heatmap.animation_frame(whales_interp[whale_mask], vessel_points[vessel_mask],
+                                              protected_areas, basemap_src, bds, ts)
+            with timer('Export frame'):
+                export_png(fig, filename=fname)
+
+            # Close selenium tab to prevent memory bloat
+            with timer('Cleanup'):
+                driver = webdriver.webdriver_control.get()
+                print(driver)
+                driver.close()

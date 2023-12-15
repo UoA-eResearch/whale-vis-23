@@ -51,7 +51,7 @@ def plot_whale_pts(fig: figure, whale_df: GeoDataFrame, timestamp: datetime = No
         if mask.sum() == 0:
             return
         for name, group in whale_df[mask].groupby('name'):
-            fig.scatter(group.geometry.x, group.geometry.y, color=cmap[name], fill_alpha=0.5)
+            fig.line(group.geometry.x, group.geometry.y, color=cmap[name], line_width=2, line_alpha=0.8)
     else:
         fig.scatter('x', 'y', source=whale_df, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5)
 
