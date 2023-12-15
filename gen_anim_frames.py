@@ -101,7 +101,4 @@ if __name__ == '__main__':
                 export_png(fig, filename=fname)
 
             # Close selenium drivers to prevent memory bloat
-            num_drivers = len(webdriver_control._drivers)
-            print(f'Num drivers: {num_drivers}')
-            if num_drivers > 10:
-                webdriver_control.cleanup()
+            webdriver_control.cleanup()
