@@ -84,9 +84,9 @@ def load_vessel_points(filename, crs):
         for grp, sub_group in split_on_gaps(group):
             if len(sub_group) > 4:
                 res = interpolate_trace(sub_group)
-                res['callsign'] = callsign
+                res['callsign'] = f'{callsign}_{grp}'
                 res['type'] = vessel_type
-                results[(callsign, grp)] = res
+                results[f'{callsign}_{grp}'] = res
 
     # Combine into a single dataframe
     gdf = pd.concat(results, ignore_index=True)
