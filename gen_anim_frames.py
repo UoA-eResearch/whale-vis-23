@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from data_processing import load_data
 from plotting import heatmap
-from plotting.util import fix_dateline
+from plotting.util import fix_dateline, points_to_segments
 from utils import timer
 import argparse
 
@@ -62,6 +62,10 @@ if __name__ == '__main__':
     whale_mask = (whales_interp.timestamp >= start) & (whales_interp.timestamp < end)
     vessel_mask = (vessel_points.timestamp >= start) & (vessel_points.timestamp < end)
 
+    # Line segment dfs (for plotting fading lines)
+    whales_segs = points_to_segments(whales_interp[whale_mask], 'name')
+    vessel_segs = points_to_segments(vessel_points[vessel_mask], 'callsign')
+
     # Convert all gdfs to lat/long
     whales_interp = whales_interp.to_crs(4326)
     vessel_points = vessel_points.to_crs(4326)
@@ -95,8 +99,10 @@ if __name__ == '__main__':
         print(bname, i)
         with timer('Full frame'):
             with timer('Generate frame'):
-                fig = heatmap.animation_frame(whales_interp[whale_mask], vessel_points[vessel_mask],
-                                              protected_areas, basemap_src, bds, ts)
+                fig = heatmap.animation_frame_fade(
+                    whales_segs, vessel_segs,
+                    whales_interp[whale_mask], vessel_points[vessel_mask],
+                    protected_areas, basemap_src, bds, ts)
             with timer('Export frame'):
                 export_png(fig, filename=fname)
 

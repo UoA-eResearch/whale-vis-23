@@ -1,8 +1,9 @@
 import numpy as np
 from bokeh.events import DocumentReady
 from bokeh.io import curdoc
-from bokeh.models import PolyAnnotation, Label, Plot, BoxAnnotation, CustomJS
+from bokeh.models import PolyAnnotation, Label, Plot, BoxAnnotation, CustomJS, Image
 from datetime import datetime
+from PIL import Image
 
 
 def date_annotation(figure: Plot, date: datetime, x_pos=0.9, y_pos=0.95, text_size=20):
@@ -17,6 +18,18 @@ def date_annotation(figure: Plot, date: datetime, x_pos=0.9, y_pos=0.95, text_si
                         text_align='right', text_baseline='top',
                         x_units='screen', y_units='screen')
     figure.add_layout(date_label)
+
+
+def add_logo(figure: Plot, filename, x_pos=0.15, y_pos=0.95, width=0.2, height=0.05):
+    abs_x_pos = x_pos * figure.width
+    abs_y_pos = y_pos * figure.height
+    # abs_width = width * figure.width
+    # abs_height = height * figure.height
+
+    image = np.array(Image.open(filename).getdata())
+
+    # logo = Image(url=[filename], x=abs_x_pos, y=abs_y_pos, w=abs_width, h=abs_height)
+    figure.image_rgba(image=[image], x=abs_x_pos, y=abs_y_pos, anchor='top_left')
 
 
 def north_arrow(figure: Plot, x_pos=0.05, y_pos=0.95, arrow_size=30, text_size=20):

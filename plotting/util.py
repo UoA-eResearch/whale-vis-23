@@ -17,9 +17,6 @@ def points_to_segments(gdf, grouper):
 
     out = pd.concat(results, ignore_index=True)
 
-    # Convert timestamp to seconds since epoch (for easier comparison later)
-    out['timestamp'] = out['timestamp'].astype('int64') // 10 ** 9
-
     return out
 
 
