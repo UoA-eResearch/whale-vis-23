@@ -6,7 +6,7 @@ import topojson as tp
 from joblib import Memory
 from shapely import LineString
 
-from data_processing.interpolation import interpolate_trace
+from data_processing.interpolation import interpolate_trace, split_on_gaps
 
 memory = Memory('cache_data/', verbose=1)
 
@@ -81,10 +81,12 @@ def load_vessel_points(filename, crs):
     # Interpolate data individually for each vessel
     results = {}
     for callsign, group in gdf.groupby('callsign'):
-        res = interpolate_trace(group)
-        res['callsign'] = callsign
-        res['type'] = vessel_type
-        results[callsign] = res
+        for grp, sub_group in split_on_gaps(group):
+            if len(sub_group) > 4:
+                res = interpolate_trace(sub_group)
+                res['callsign'] = callsign
+                res['type'] = vessel_type
+                results[(callsign, grp)] = res
 
     # Combine into a single dataframe
     gdf = pd.concat(results, ignore_index=True)

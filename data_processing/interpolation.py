@@ -11,6 +11,20 @@ def ceil_time(dt, delta):
     return dt + (datetime.datetime.min - dt) % delta
 
 
+def split_on_gaps(df, gap=129600):
+    """Split a dataframe into multiple dataframes, separated by gaps in the timsestamp column"""
+    df = df.reset_index(drop=True)
+    df['_seconds'] = (df['timestamp'] - df.loc[0, 'timestamp']).dt.total_seconds()
+    df['_diff'] = df['_seconds'].diff().fillna(0)
+    df['_split'] = df['_diff'] > gap
+    df['_group'] = df['_split'].cumsum()
+
+    for grp, group in df.groupby('_group'):
+        yield grp, group.drop(columns=['_seconds', '_diff', '_split', '_group'])
+
+    df = df.drop(columns=['_seconds', '_diff', '_split', '_group'])
+
+
 def interpolate_trace(df, interval=600):
     """Resample trace to be at regular intervals (e.g.: 10 minutes)"""
     # Extract x/y coordinates, convert timestamps to seconds since start
