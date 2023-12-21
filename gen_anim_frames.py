@@ -70,6 +70,8 @@ if __name__ == '__main__':
     whales_interp = whales_interp.to_crs(4326)
     vessel_points = vessel_points.to_crs(4326)
     protected_areas = protected_areas.to_crs(4326)
+    whales_segs = whales_segs.to_crs(4326)
+    vessel_segs = vessel_segs.to_crs(4326)
     basemap = basemap.to_crs(4326)
     bounds_full = vessel_points.geometry.total_bounds
     bounds_ant = [178, -50.5, 179.5, -47]
@@ -79,6 +81,8 @@ if __name__ == '__main__':
     whales_interp.geometry = whales_interp.geometry.apply(fix_dateline)
     vessel_points.geometry = vessel_points.geometry.apply(fix_dateline)
     protected_areas.geometry = protected_areas.geometry.apply(fix_dateline)
+    whales_segs.geometry = whales_segs.geometry.apply(fix_dateline)
+    vessel_segs.geometry = vessel_segs.geometry.apply(fix_dateline)
     basemap.geometry = basemap.geometry.apply(fix_dateline)
 
     basemap_src = GeoJSONDataSource(geojson=basemap.to_json(default=str))
