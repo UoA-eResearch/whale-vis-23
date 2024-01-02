@@ -95,9 +95,12 @@ if __name__ == '__main__':
     }[bname]
 
     # Generate frames
-    os.makedirs('frames', exist_ok=True)
+    folder = 'frames'
+    os.makedirs(folder, exist_ok=True)
+
+    done = 0
     for i, ts in enumerate(timestamps):
-        fname = f'frames/frame_{bname}_{i:04d}.png'
+        fname = os.path.join(folder, f'frame_{bname}_{i:04d}.png')
         if path.isfile(fname):
             continue
         print(bname, i)
@@ -112,3 +115,8 @@ if __name__ == '__main__':
 
             # Close selenium drivers to prevent memory bloat
             webdriver_control.cleanup()
+
+        # Exit after generating some frames (selenium slows down after many frames)
+        done += 1
+        if done > 600:
+            break
