@@ -186,16 +186,17 @@ def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: 
 
 def plot_location(fig, vessel_pts_df, whale_pts_df, timestamp):
     if (whale_pts_df['timestamp'] == timestamp).sum() > 0:
-        cmapper = whale_colormap(whale_pts_df)
+        whale_cmap = whale_colormap(whale_pts_df)
         whale_data = whale_pts_df[whale_pts_df['timestamp'] == timestamp]
         whale_source = GeoJSONDataSource(geojson=whale_data.to_json(default=str))
-        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': cmapper}, fill_alpha=1, size=10)
+        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': whale_cmap}, fill_alpha=1, size=10)
 
     if (vessel_pts_df['timestamp'] == timestamp).sum() > 0:
+        vessel_cmap = vessel_colormap(vessel_pts_df)
         vessel_data = vessel_pts_df[vessel_pts_df['timestamp'] == timestamp]
-        vessel_colors = {t: c for t, c in zip(vessel_data['type'].unique(), Bright5)}
-        for vtype, group in vessel_data.groupby('type'):
-            fig.scatter(group.geometry.x, group.geometry.y, color=vessel_colors[vtype], fill_alpha=1, size=5)
+        vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json(default=str))
+        fig.scatter('x', 'y', source=vessel_source, color={'field': 'type', 'transform': vessel_cmap}, fill_alpha=1,
+                    size=5)
 
 
 def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
