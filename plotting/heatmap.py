@@ -69,6 +69,8 @@ def plot_whales_fade(fig: figure, whale_seg_df: GeoDataFrame, timestamp: datetim
     """Plot whale traces, fading out after a cutoff"""
     mask = whale_seg_df['timestamp'] <= timestamp
     mask &= whale_seg_df['timestamp'] > (timestamp - timedelta(days=14))
+    if mask.sum() == 0:
+        return
 
     whale_data = whale_seg_df[mask]
     whale_data['fade'] = whale_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
@@ -200,6 +202,8 @@ def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
     """Plot vessel traces, fading out after a cutoff"""
     mask = vessels_seg_df['timestamp'] <= timestamp
     mask &= vessels_seg_df['timestamp'] > (timestamp - timedelta(days=14))
+    if mask.sum() == 0:
+        return
 
     vessels_data = vessels_seg_df[mask]
     vessels_data['fade'] = vessels_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
