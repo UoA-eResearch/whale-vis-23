@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame
-from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorMapper, CDSView, BooleanFilter, ColorBar
+from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorMapper, CDSView, BooleanFilter, ColorBar, \
+    Legend
 from bokeh.plotting import figure
 from bokeh.palettes import Viridis256, Inferno256, Bright5
 
@@ -108,10 +109,14 @@ def plot_protected_areas(fig: figure, protected_areas: GeoDataFrame):
     protected_source = GeoJSONDataSource(geojson=protected_areas.to_json())
     imma_view = CDSView(filter=BooleanFilter((protected_areas['ptype'] == 'imma').to_list()))
     mpa_view = CDSView(filter=BooleanFilter((protected_areas['ptype'] == 'mpa').to_list()))
-    fig.patches('xs', 'ys', source=protected_source, fill_color='#ddd', line_color='#ddd',
+    imma_patches = fig.patches('xs', 'ys', source=protected_source, fill_color='#ddd', line_color='#ddd',
                 line_alpha=1, fill_alpha=0.8, view=imma_view)
-    fig.patches('xs', 'ys', source=protected_source, fill_color='lightskyblue', line_color='lightskyblue',
+    mpa_patches = fig.patches('xs', 'ys', source=protected_source, fill_color='lightskyblue', line_color='lightskyblue',
                 line_alpha=1, fill_alpha=0.8, view=mpa_view)
+
+    pa_legend = Legend(items=[('MPA', [mpa_patches]), ('IMMA', [imma_patches])],
+                       location=(115, 2), orientation='vertical')
+    fig.add_layout(pa_legend)
 
 
 def zoom_to_bounds(fig, bounds):
@@ -217,17 +222,17 @@ def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
     vessel_colors = {t: c for t, c in zip(vessels_seg_df['type'].unique(), cmap.palette)}
     src = GeoJSONDataSource(geojson=vessels_data.drop(columns=['timestamp']).to_json())
     fig.multi_line('xs', 'ys', source=src, color={'field': 'type', 'transform': cmap},
-                   line_width=1, line_alpha='fade',
-                   legend_label='type')
+                   line_width=1, line_alpha='fade')
 
-    fig.legend.location = 'bottom_left'
     # Include all vessel types in legend
     legend_dummies = {
         label: fig.line([0, 0], [0, 0], color=vessel_colors[label], line_width=2, line_alpha=0.5)
         for label in vessel_colors.keys()
     }
 
-    fig.legend.items = [(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()]
+    vessel_legend = Legend(items=[(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()],
+                            location=(2, 2), orientation='vertical')
+    fig.add_layout(vessel_legend)
 
 
 def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
@@ -242,17 +247,17 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
     vessel_colors = {t: c for t, c in zip(vessels_pts_df['type'].unique(), Bright5)}
     for callsign, group in vessel_data.groupby('callsign'):
         vtype = group.iloc[0]['type']
-        fig.line(group.geometry.x, group.geometry.y, color=vessel_colors[vtype], line_width=1, line_alpha=0.5,
-                 legend_label=vtype)
+        fig.line(group.geometry.x, group.geometry.y, color=vessel_colors[vtype], line_width=1, line_alpha=0.5)
 
-    fig.legend.location = 'bottom_left'
     # Include all vessel types in legend
     legend_dummies = {
         label: fig.line([0, 0], [0, 0], color=vessel_colors[label], line_width=2, line_alpha=0.5)
         for label in vessel_colors.keys()
     }
 
-    fig.legend.items = [(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()]
+    vessel_legend = Legend(items=[(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()],
+                            location=(2, 2), orientation='vertical')
+    fig.add_layout(vessel_legend)
 
 
 def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bounds, timestamp):
@@ -271,6 +276,9 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bou
         plot_basemap(fig, basemap_src)
     with timer('plot_location'):
         plot_location(fig, vessels_pts_df, whales_df, timestamp)
+
+    fig.xaxis.axis_label = 'Longitude'
+    fig.yaxis.axis_label = 'Latitude'
 
     # Add annotations
     north_arrow(fig)
@@ -300,6 +308,9 @@ def animation_frame_fade(whales_seg_df, vessels_seg_df,
         plot_basemap(fig, basemap_src)
     with timer('plot_location'):
         plot_location(fig, vessels_pts_df, whales_pts_df, timestamp)
+
+    fig.xaxis.axis_label = 'Longitude'
+    fig.yaxis.axis_label = 'Latitude'
 
     # Add annotations
     north_arrow(fig)
