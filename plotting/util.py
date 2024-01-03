@@ -10,7 +10,7 @@ def points_to_segments(gdf, grouper):
 
     results = []
     for _, group in tqdm(desc='Converting vessel points to segments', iterable=gdf.groupby(grouper)):
-        res = group.iloc[:-1].copy()
+        res = group.iloc[1:].copy()
         res['geometry'] = list(map(LineString, zip(group['geometry'][:-1],
                                                    group['geometry'].shift(-1)[:-1])))
         results.append(res)
