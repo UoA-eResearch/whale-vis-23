@@ -62,7 +62,8 @@ def plot_whale_pts(fig: figure, whale_df: GeoDataFrame, timestamp: datetime = No
         for name, group in whale_df[mask].groupby('name'):
             fig.line(group.geometry.x, group.geometry.y, color=cmap[name], line_width=2, line_alpha=0.8)
     else:
-        fig.scatter('x', 'y', source=whale_df, color={'field': 'name', 'transform': cmapper}, fill_alpha=0.5)
+        for name, group in whale_df.groupby('name'):
+            fig.line(group.geometry.x, group.geometry.y, color=cmap[name], line_width=2, line_alpha=0.8)
 
 
 def plot_whales_fade(fig: figure, whale_seg_df: GeoDataFrame, timestamp: datetime):
@@ -130,11 +131,14 @@ def traces_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas:
     plot_protected_areas(fig, protected_areas)
     plot_vessel_traces(fig, vessel_df)
     plot_whale_pts(fig, whale_df, timestamp)
-    plot_basemap(fig, basemap)
+    plot_basemap(fig, GeoJSONDataSource(geojson=basemap.to_json(default=str)))
 
     # Add annotations
     north_arrow(fig)
     scale_bar(fig, convert_from_deg=whale_df.crs.equals(4326))
+    add_logo(fig, 'assets/logo300.png', bounds, x_pos=0.95, y_pos=0.98, anchor='top_right')
+    if timestamp:
+        date_annotation(fig, timestamp)
 
     zoom_to_bounds(fig, bounds)
 
