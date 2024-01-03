@@ -277,8 +277,8 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bou
     with timer('plot_location'):
         plot_location(fig, vessels_pts_df, whales_df, timestamp)
 
-    fig.xaxis.axis_label = 'Longitude'
-    fig.yaxis.axis_label = 'Latitude'
+    fig.xaxis.axis_label = 'Lon'
+    fig.yaxis.axis_label = 'Lat'
 
     # Add annotations
     north_arrow(fig, bounds, x_pos=0.03, y_pos=0.98, arrow_size=0.03)
@@ -311,8 +311,8 @@ def animation_frame_fade(whales_seg_df, vessels_seg_df,
     with timer('plot_location'):
         plot_location(fig, vessels_pts_df, whales_pts_df, timestamp)
 
-    fig.xaxis.axis_label = 'Longitude'
-    fig.yaxis.axis_label = 'Latitude'
+    fig.xaxis.axis_label = 'Lon'
+    fig.yaxis.axis_label = 'Lat'
 
     # Add annotations
     north_arrow(fig, bounds, x_pos=0.03, y_pos=0.98, arrow_size=0.03)
