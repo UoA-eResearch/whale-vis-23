@@ -80,7 +80,7 @@ def plot_whales_fade(fig: figure, whale_seg_df: GeoDataFrame, timestamp: datetim
 
     cmapper = whale_colormap(whale_seg_df)
     src = GeoJSONDataSource(geojson=whale_data.drop(columns=['timestamp']).to_json())
-    fig.multi_line('xs', 'ys', source=src, color={'field': 'name', 'transform': cmapper}, line_width=2,
+    fig.multi_line('xs', 'ys', source=src, color={'field': 'name', 'transform': cmapper}, line_width=3,
                    line_alpha='fade')
 
 
@@ -263,7 +263,7 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
 def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bounds, timestamp):
     """Produce a plot showing the current location of vessels and whales"""
     plot_width, plot_height = _fig_size(bounds)
-    fig = figure(width=plot_width, height=plot_height, toolbar_location=None)
+    fig = figure(width=plot_width, height=plot_height, toolbar_location=None, match_aspect=True)
 
     # Add layers
     with timer('plot_protected_areas'):
@@ -281,9 +281,11 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bou
     fig.yaxis.axis_label = 'Latitude'
 
     # Add annotations
-    north_arrow(fig)
+    north_arrow(fig, bounds, x_pos=0.03, y_pos=0.98, arrow_size=0.03)
     scale_bar(fig, convert_from_deg=whales_df.crs.equals(4326))
-    date_annotation(fig, timestamp)
+    logo_height = 60 / plot_height
+    add_logo(fig, 'assets/logo.png', bounds, x_pos=0.98, y_pos=0.98, height=logo_height, anchor='top_right')
+    date_annotation(fig, timestamp, bounds, x_pos=0.5, y_pos=0.02)
 
     zoom_to_bounds(fig, bounds)
 
@@ -295,7 +297,7 @@ def animation_frame_fade(whales_seg_df, vessels_seg_df,
                          protected_areas, basemap_src, bounds, timestamp):
     """Produce a plot showing the current location of vessels and whales"""
     plot_width, plot_height = _fig_size(bounds)
-    fig = figure(width=plot_width, height=plot_height, toolbar_location=None)
+    fig = figure(width=plot_width, height=plot_height, toolbar_location=None, match_aspect=True)
 
     # Add layers
     with timer('plot_protected_areas'):
@@ -313,12 +315,11 @@ def animation_frame_fade(whales_seg_df, vessels_seg_df,
     fig.yaxis.axis_label = 'Latitude'
 
     # Add annotations
-    north_arrow(fig)
+    north_arrow(fig, bounds, x_pos=0.03, y_pos=0.98, arrow_size=0.03)
     scale_bar(fig, convert_from_deg=whales_pts_df.crs.equals(4326))
-    date_annotation(fig, timestamp)
-    add_logo(fig, 'assets/logo200.png',
-             x_pos=0.5, y_pos=0.5,
-             width=0.2, height=0.0347)
+    logo_height = 60 / plot_height
+    add_logo(fig, 'assets/logo.png', bounds, x_pos=0.98, y_pos=0.98, height=logo_height, anchor='top_right')
+    date_annotation(fig, timestamp, bounds, x_pos=0.5, y_pos=0.02)
 
     zoom_to_bounds(fig, bounds)
 

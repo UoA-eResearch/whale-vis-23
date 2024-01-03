@@ -6,33 +6,58 @@ from datetime import datetime
 from PIL import Image
 
 
-def date_annotation(figure: Plot, date: datetime, x_pos=0.9, y_pos=0.95, text_size=20):
+def _lerp(a, b, v):
+    """Linear interpolation"""
+    return a + v * (b - a)
+
+
+def date_annotation(figure: Plot, date: datetime, bounds, x_pos=0.9, y_pos=0.9, text_size=20):
     """Add a date annotation to a map figure"""
     # Place on the figure
-    abs_x_pos = x_pos * figure.width
-    abs_y_pos = y_pos * figure.height
+    abs_x_pos = _lerp(bounds[0], bounds[2], x_pos)
+    abs_y_pos = _lerp(bounds[1], bounds[3], y_pos)
 
     # Label the date
     date_label = Label(x=abs_x_pos, y=abs_y_pos,
                         text=date.strftime('%d-%m-%Y'), text_font_size=f'{text_size}pt',
-                        text_align='right', text_baseline='top',
-                        x_units='screen', y_units='screen')
+                        text_align='center', text_baseline='bottom',
+                        x_units='data', y_units='data')
     figure.add_layout(date_label)
 
 
-def add_logo(figure: Plot, filename, x_pos=0.15, y_pos=0.95, width=0.2, height=0.05):
-    abs_x_pos = x_pos * figure.width
-    abs_y_pos = y_pos * figure.height
-    # abs_width = width * figure.width
-    # abs_height = height * figure.height
-
-    image = np.array(Image.open(filename).getdata())
-
-    # logo = Image(url=[filename], x=abs_x_pos, y=abs_y_pos, w=abs_width, h=abs_height)
-    figure.image_rgba(image=[image], x=abs_x_pos, y=abs_y_pos, anchor='top_left')
+def _pack_image(image):
+    """Pack an rgba image into a 2d array"""
+    # See https://docs.bokeh.org/en/latest/docs/examples/topics/images/image_rgba.html
+    out = np.empty((image.shape[0], image.shape[1]), dtype=np.uint32)
+    view = out.view(dtype=np.uint8).reshape((image.shape[0], image.shape[1], 4))
+    view[:, :, :] = image
+    return out
 
 
-def north_arrow(figure: Plot, x_pos=0.05, y_pos=0.95, arrow_size=30, text_size=20):
+def add_logo(figure: Plot, filename, bounds, x_pos=0.15, y_pos=0.95, height=0.1, anchor='top_left'):
+    # Load image from disk
+    im = Image.open(filename)
+    image = np.array(im.getdata()).reshape((im.size[1], im.size[0], 4))
+    packed_image = _pack_image(image)
+    packed_image = np.flipud(packed_image)
+    im.close()
+
+    # Convert relative screen position to absolute data position
+    abs_x_pos = _lerp(bounds[0], bounds[2], x_pos)
+    abs_y_pos = _lerp(bounds[1], bounds[3], y_pos)
+
+    # Scale image to desired height
+    image_aspect = packed_image.shape[1] / packed_image.shape[0]
+    data_height = height * (bounds[3] - bounds[1])
+    data_width = image_aspect * data_height
+
+    figure.image_rgba(image=[packed_image], x=abs_x_pos, y=abs_y_pos,
+                      dw=data_width, dh=data_height,
+                      dw_units='data', dh_units='data',
+                      anchor=anchor)
+
+
+def north_arrow(figure: Plot, bounds, x_pos=0.05, y_pos=0.95, arrow_size=.05, text_size=20):
     """Add a north arrow to a map figure"""
     # North arrow
     xs = np.array([0, .5, 1, .5])
@@ -40,21 +65,22 @@ def north_arrow(figure: Plot, x_pos=0.05, y_pos=0.95, arrow_size=30, text_size=2
     # Center
     xs -= 0.5
     # Scale
-    xs *= arrow_size
-    ys *= arrow_size
+    scale = arrow_size * (bounds[2] - bounds[0])
+    xs *= scale
+    ys *= scale
     # Place on the figure
-    abs_x_pos = x_pos * figure.width
-    abs_y_pos = y_pos * figure.height - arrow_size
+    abs_x_pos = _lerp(bounds[0], bounds[2], x_pos)
+    abs_y_pos = _lerp(bounds[1], bounds[3], y_pos) - scale
     xs += abs_x_pos
     ys += abs_y_pos
 
     northArrow = PolyAnnotation(fill_color='black', fill_alpha=1,
                                 xs=list(xs), ys=list(ys),
-                                xs_units='screen', ys_units='screen')
+                                xs_units='data', ys_units='data')
     northLetter = Label(x=abs_x_pos, y=abs_y_pos,
                         text='N', text_font_size=f'{text_size}pt',
                         text_align='center', text_baseline='top',
-                        x_units='screen', y_units='screen')
+                        x_units='data', y_units='data')
     figure.add_layout(northArrow)
     figure.add_layout(northLetter)
 
@@ -107,7 +133,7 @@ def scale_bar(figure: Plot, halved=False, convert_from_deg=False):
     
     let width_text = {'haversine_distance(y0, x1 - width, y0, x1).toPrecision(2)' if convert_from_deg else 'width'};
 
-    let right = lerp(x0, x1, 0.95);
+    let right = lerp(x0, x1, 0.98);
     let left = right - width;
     let middle = lerp(left, right, 0.5);
     let top = lerp(y0, y1, 0.05);
