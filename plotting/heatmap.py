@@ -44,10 +44,11 @@ def whale_colormap(whale_df):
     return CategoricalColorMapper(factors=whale_names, palette=colors)
 
 
-def vessel_colormap(vessel_df):
+def vessel_colormap():
     """Color vessels by type"""
-    vessel_types = vessel_df['type'].unique()
-    return CategoricalColorMapper(factors=vessel_types, palette=Bright5)
+    vessel_types = ['Fishing', 'Passenger', 'Cargo', 'Tanker', 'Other']
+    vessel_colors = {t: c for t, c in zip(vessel_types, Bright5)}
+    return CategoricalColorMapper(factors=vessel_types, palette=Bright5), vessel_colors
 
 
 def plot_whale_pts(fig: figure, whale_df: GeoDataFrame, timestamp: datetime = None):
@@ -201,7 +202,7 @@ def plot_location(fig, vessel_pts_df, whale_pts_df, timestamp):
         fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': whale_cmap}, fill_alpha=1, size=10)
 
     if (vessel_pts_df['timestamp'] == timestamp).sum() > 0:
-        vessel_cmap = vessel_colormap(vessel_pts_df)
+        vessel_cmap, _ = vessel_colormap()
         vessel_data = vessel_pts_df[vessel_pts_df['timestamp'] == timestamp]
         vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json(default=str))
         fig.scatter('x', 'y', source=vessel_source, color={'field': 'type', 'transform': vessel_cmap}, fill_alpha=1,
@@ -218,8 +219,7 @@ def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
     vessels_data = vessels_seg_df[mask]
     vessels_data['fade'] = vessels_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
 
-    cmap = vessel_colormap(vessels_seg_df)
-    vessel_colors = {t: c for t, c in zip(vessels_seg_df['type'].unique(), cmap.palette)}
+    cmap, vessel_colors = vessel_colormap()
     src = GeoJSONDataSource(geojson=vessels_data.drop(columns=['timestamp']).to_json())
     fig.multi_line('xs', 'ys', source=src, color={'field': 'type', 'transform': cmap},
                    line_width=1, line_alpha='fade')
@@ -244,7 +244,7 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
     vessel_data = vessels_pts_df[mask]
     # vessel_data['fade'] = vessel_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
 
-    vessel_colors = {t: c for t, c in zip(vessels_pts_df['type'].unique(), Bright5)}
+    _, vessel_colors = vessel_colormap()
     for callsign, group in vessel_data.groupby('callsign'):
         vtype = group.iloc[0]['type']
         fig.line(group.geometry.x, group.geometry.y, color=vessel_colors[vtype], line_width=1, line_alpha=0.5)
