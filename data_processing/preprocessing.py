@@ -91,9 +91,9 @@ if __name__ == '__main__':
         snap_points_to_coast(whales_interp, whale_coast_file)
 
     # Generate encounters
-    vessel_data = [gpd.read_file(coast_file, 2193) for _, coast_file in vessel_data_files]
+    vessel_data = [gpd.read_file(coast_file) for _, coast_file in vessel_data_files]
     vessel_points = pd.concat(vessel_data)
-    whale_points = gpd.read_file(whale_coast_file, 2193)
+    whale_points = gpd.read_file(whale_coast_file)
 
     os.makedirs('data/encounters', exist_ok=True)
     gen_encounters(vessel_points, whale_points, 'data/encounters/vessel_encounters.gpkg')
