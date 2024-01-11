@@ -57,7 +57,7 @@ if __name__ == '__main__':
     # }
 
     start = '2020-07-01'
-    end = '2023-06-01'
+    end = '2023-06-30'
     timestamps = pd.date_range(start, end, freq='30min')
     whale_mask = (whales_interp.timestamp >= start) & (whales_interp.timestamp < end)
     vessel_mask = (vessel_points.timestamp >= start) & (vessel_points.timestamp < end)
