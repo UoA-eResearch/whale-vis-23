@@ -214,16 +214,16 @@ def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
     """Plot vessel traces, fading out after a cutoff"""
     mask = vessels_seg_df['timestamp'] <= timestamp
     mask &= vessels_seg_df['timestamp'] > (timestamp - timedelta(days=14))
-    if mask.sum() == 0:
-        return
-
-    vessels_data = vessels_seg_df[mask]
-    vessels_data['fade'] = vessels_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
 
     cmap, vessel_colors = vessel_colormap()
-    src = GeoJSONDataSource(geojson=vessels_data.drop(columns=['timestamp']).to_json())
-    fig.multi_line('xs', 'ys', source=src, color={'field': 'type', 'transform': cmap},
-                   line_width=1, line_alpha='fade')
+
+    if mask.sum() > 0:
+        vessels_data = vessels_seg_df[mask]
+        vessels_data['fade'] = vessels_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
+
+        src = GeoJSONDataSource(geojson=vessels_data.drop(columns=['timestamp']).to_json())
+        fig.multi_line('xs', 'ys', source=src, color={'field': 'type', 'transform': cmap},
+                       line_width=1, line_alpha='fade')
 
     # Include all vessel types in legend
     legend_dummies = {
@@ -240,15 +240,15 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
     """Plot vessel traces up to a given timestamp"""
     mask = vessels_pts_df['timestamp'] <= timestamp
     mask &= vessels_pts_df['timestamp'] > (timestamp - timedelta(days=14))
-    if mask.sum() == 0:
-        return
-    vessel_data = vessels_pts_df[mask]
-    # vessel_data['fade'] = vessel_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
 
     _, vessel_colors = vessel_colormap()
-    for callsign, group in vessel_data.groupby('callsign'):
-        vtype = group.iloc[0]['type']
-        fig.line(group.geometry.x, group.geometry.y, color=vessel_colors[vtype], line_width=1, line_alpha=0.5)
+
+    if mask.sum() > 0:
+        vessel_data = vessels_pts_df[mask]
+
+        for callsign, group in vessel_data.groupby('callsign'):
+            vtype = group.iloc[0]['type']
+            fig.line(group.geometry.x, group.geometry.y, color=vessel_colors[vtype], line_width=1, line_alpha=0.5)
 
     # Include all vessel types in legend
     legend_dummies = {
