@@ -166,7 +166,7 @@ def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000, times
             .sort_values('encounter_dist')  # Sort by distance so that closest points are plotted last
             .iloc[::-1]  # Reverse order
         )
-        vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json())
+        vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json(default=str))
 
         fig.scatter('x', 'y', source=vessel_source, color={'field': 'encounter_dist', 'transform': cmap},
                     fill_alpha=0.4, size=10, line_color=None)
