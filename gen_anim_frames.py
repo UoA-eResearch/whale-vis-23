@@ -89,7 +89,10 @@ if __name__ == '__main__':
     }[bname]
 
     # Generate frames
-    folder = 'frames'
+    if not use_encounters:
+        folder = '/pvol/frames'
+    else:
+        folder = '/pvol/frames_enc'
     os.makedirs(folder, exist_ok=True)
 
     done = 0
