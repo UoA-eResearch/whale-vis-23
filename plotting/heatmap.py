@@ -151,20 +151,25 @@ def traces_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas:
     return fig
 
 
-def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000):
+def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000, timestamp=None):
     """Add encounter scatter/heatmap to figure"""
     mask = (~vessel_pts['whale_dist'].isna()) & (vessel_pts['whale_dist'] < max_dist)
-    vessel_data = (
-        vessel_pts[mask]  # Only points with encounters
-        .sort_values('whale_dist')  # Sort by distance so that closest points are plotted last
-        .iloc[::-1]  # Reverse order
-    )
-    vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json())
+    if timestamp:
+        mask &= vessel_pts['timestamp'] <= timestamp
+        mask &= vessel_pts['timestamp'] > (timestamp - timedelta(days=14))
 
-    cmap = LinearColorMapper(Inferno256, low=vessel_data['whale_dist'].max(), high=0)
+    cmap = LinearColorMapper(Inferno256, low=max_dist, high=0)
 
-    fig.scatter('x', 'y', source=vessel_source, color={'field': 'whale_dist', 'transform': cmap},
-                fill_alpha=0.4, size=10, line_color=None)
+    if mask.sum() > 0:
+        vessel_data = (
+            vessel_pts[mask]  # Only points with encounters
+            .sort_values('encounter_dist')  # Sort by distance so that closest points are plotted last
+            .iloc[::-1]  # Reverse order
+        )
+        vessel_source = GeoJSONDataSource(geojson=vessel_data.to_json())
+
+        fig.scatter('x', 'y', source=vessel_source, color={'field': 'encounter_dist', 'transform': cmap},
+                    fill_alpha=0.4, size=10, line_color=None)
 
     # Add colorbar
     color_bar = ColorBar(color_mapper=cmap, title='Encounter distance')
@@ -307,7 +312,7 @@ def animation_frame_fade(whales_seg_df, vessels_seg_df,
         plot_vessels_fade(fig, vessels_seg_df, timestamp)
     if encounters is not None:
         with timer('plot_encounters'):
-            plot_encounters(fig, encounters, max_dist=20000)
+            plot_encounters(fig, encounters, max_dist=20000, timestamp=timestamp)
     with timer('plot_whale_pts'):
         plot_whales_fade(fig, whales_seg_df, timestamp)
     with timer('plot_basemap'):
