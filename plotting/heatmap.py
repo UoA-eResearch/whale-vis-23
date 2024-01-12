@@ -310,11 +310,11 @@ def animation_frame_fade(whales_seg_df, vessels_seg_df,
         plot_protected_areas(fig, protected_areas)
     with timer('plot_partial_vessel_traces'):
         plot_vessels_fade(fig, vessels_seg_df, timestamp)
+    with timer('plot_whale_pts'):
+        plot_whales_fade(fig, whales_seg_df, timestamp)
     if encounters is not None:
         with timer('plot_encounters'):
             plot_encounters(fig, encounters, max_dist=20000, timestamp=timestamp)
-    with timer('plot_whale_pts'):
-        plot_whales_fade(fig, whales_seg_df, timestamp)
     with timer('plot_basemap'):
         plot_basemap(fig, basemap_src)
     with timer('plot_location'):
