@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 def points_to_segments(gdf, grouper):
     """Converts a GeoDataFrame containing points to one where each row is a line segment between two points"""
+    assert gdf.crs == 2193, "Expecting projected CRS"
     # Sort by timestamp
     gdf = gdf.sort_values('timestamp')
 
@@ -13,6 +14,12 @@ def points_to_segments(gdf, grouper):
         res = group.iloc[1:].copy()
         res['geometry'] = list(map(LineString, zip(group['geometry'][:-1],
                                                    group['geometry'].shift(-1)[:-1])))
+
+        # Drop any rows where the segment jumps an unreasonable distance
+        res['_len'] = res['geometry'].length
+        res = res.drop(res[res['_len'] > 10000].index)
+        res.drop(columns=['_len'], inplace=True)
+
         results.append(res)
 
     out = pd.concat(results, ignore_index=True)
