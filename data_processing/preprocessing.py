@@ -98,5 +98,7 @@ if __name__ == '__main__':
     whale_points = gpd.read_file(whale_coast_file)
 
     os.makedirs('data/encounters', exist_ok=True)
-    gen_encounters(vessel_points, whale_points, 'data/encounters/vessel_encounters.gpkg')
-    gen_encounters(whale_points, vessel_points, 'data/encounters/whale_encounters.gpkg')
+    if not path.isfile('data/encounters/vessel_encounters.gpkg'):
+        gen_encounters(vessel_points, whale_points, 'data/encounters/vessel_encounters.gpkg')
+    if not path.isfile('data/encounters/whale_encounters.gpkg'):
+        gen_encounters(whale_points, vessel_points, 'data/encounters/whale_encounters.gpkg')
