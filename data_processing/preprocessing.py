@@ -3,6 +3,7 @@ from functools import partial
 from os import path
 import geopandas as gpd
 import pandas as pd
+from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 from pathlib import Path
 
@@ -91,7 +92,8 @@ if __name__ == '__main__':
         snap_points_to_coast(whales_interp, whale_coast_file)
 
     # Generate encounters
-    vessel_data = [gpd.read_file(coast_file) for _, coast_file in vessel_data_files]
+    print('Generating encounters')
+    vessel_data = [gpd.read_file(coast_file) for _, coast_file in tqdm(vessel_data_files, desc='Loading vessel data')]
     vessel_points = pd.concat(vessel_data)
     whale_points = gpd.read_file(whale_coast_file)
 

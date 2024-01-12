@@ -19,8 +19,10 @@ if __name__ == '__main__':
     # Get bounds name from argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('bounds', type=str, choices=['full', 'auck', 'camp', 'anti'])
+    parser.add_argument('--encounters', action='store_true', help='Plot encounters')
     args = parser.parse_args()
     bname = args.bounds
+    use_encounters = args.encounters
 
     # Load base data
     whales, vessels, protected_areas, basemap, bounds = load_data.load_all()
@@ -33,6 +35,13 @@ if __name__ == '__main__':
 
     # Load whale points
     whales_interp = gpd.read_file('data/whales/whales_coast.gpkg')
+
+    # Load encounters
+    if use_encounters:
+        vessel_encounters = gpd.read_file('data/encounters/vessel_encounters.gpkg')
+        # whale_encounters = gpd.read_file('data/encounters/whale_encounters.gpkg')
+    else:
+        vessel_encounters = None
 
     # Set up timestamps
     # ranges = [('2020-07-01', '2023-06-01'),
@@ -85,6 +94,13 @@ if __name__ == '__main__':
     vessel_segs.geometry = vessel_segs.geometry.apply(fix_dateline)
     basemap.geometry = basemap.geometry.apply(fix_dateline)
 
+    if use_encounters:
+        vessel_encounters = vessel_encounters.to_crs(4326)
+        # whale_encounters = whale_encounters.to_crs(4326)
+
+        vessel_encounters.geometry = vessel_encounters.geometry.apply(fix_dateline)
+        # whale_encounters.geometry = whale_encounters.geometry.apply(fix_dateline)
+
     basemap_src = GeoJSONDataSource(geojson=basemap.to_json(default=str))
 
     bds = {
@@ -109,7 +125,7 @@ if __name__ == '__main__':
                 fig = heatmap.animation_frame_fade(
                     whales_segs, vessel_segs,
                     whales_interp[whale_mask], vessel_points[vessel_mask],
-                    protected_areas, basemap_src, bds, ts)
+                    protected_areas, basemap_src, bds, ts, vessel_encounters)
             with timer('Export frame'):
                 export_png(fig, filename=fname)
 

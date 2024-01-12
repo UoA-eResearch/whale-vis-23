@@ -111,9 +111,9 @@ def plot_protected_areas(fig: figure, protected_areas: GeoDataFrame):
     imma_view = CDSView(filter=BooleanFilter((protected_areas['ptype'] == 'imma').to_list()))
     mpa_view = CDSView(filter=BooleanFilter((protected_areas['ptype'] == 'mpa').to_list()))
     imma_patches = fig.patches('xs', 'ys', source=protected_source, fill_color='#ddd', line_color='#ddd',
-                line_alpha=1, fill_alpha=0.8, view=imma_view)
+                               line_alpha=1, fill_alpha=0.8, view=imma_view)
     mpa_patches = fig.patches('xs', 'ys', source=protected_source, fill_color='lightskyblue', line_color='lightskyblue',
-                line_alpha=1, fill_alpha=0.8, view=mpa_view)
+                              line_alpha=1, fill_alpha=0.8, view=mpa_view)
 
     pa_legend = Legend(items=[('MPA', [mpa_patches]), ('IMMA', [imma_patches])],
                        location=(115, 2), orientation='vertical')
@@ -199,7 +199,8 @@ def plot_location(fig, vessel_pts_df, whale_pts_df, timestamp):
         whale_cmap = whale_colormap(whale_pts_df)
         whale_data = whale_pts_df[whale_pts_df['timestamp'] == timestamp]
         whale_source = GeoJSONDataSource(geojson=whale_data.to_json(default=str))
-        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': whale_cmap}, fill_alpha=1, size=10)
+        fig.scatter('x', 'y', source=whale_source, color={'field': 'name', 'transform': whale_cmap}, fill_alpha=1,
+                    size=10)
 
     if (vessel_pts_df['timestamp'] == timestamp).sum() > 0:
         vessel_cmap, _ = vessel_colormap()
@@ -231,7 +232,7 @@ def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
     }
 
     vessel_legend = Legend(items=[(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()],
-                            location=(2, 2), orientation='vertical')
+                           location=(2, 2), orientation='vertical')
     fig.add_layout(vessel_legend)
 
 
@@ -256,7 +257,7 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
     }
 
     vessel_legend = Legend(items=[(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()],
-                            location=(2, 2), orientation='vertical')
+                           location=(2, 2), orientation='vertical')
     fig.add_layout(vessel_legend)
 
 
@@ -294,7 +295,7 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bou
 
 def animation_frame_fade(whales_seg_df, vessels_seg_df,
                          whales_pts_df, vessels_pts_df,
-                         protected_areas, basemap_src, bounds, timestamp):
+                         protected_areas, basemap_src, bounds, timestamp, encounters=None):
     """Produce a plot showing the current location of vessels and whales"""
     plot_width, plot_height = _fig_size(bounds)
     fig = figure(width=plot_width, height=plot_height, toolbar_location=None, match_aspect=True)
@@ -304,6 +305,9 @@ def animation_frame_fade(whales_seg_df, vessels_seg_df,
         plot_protected_areas(fig, protected_areas)
     with timer('plot_partial_vessel_traces'):
         plot_vessels_fade(fig, vessels_seg_df, timestamp)
+    if encounters is not None:
+        with timer('plot_encounters'):
+            plot_encounters(fig, encounters, max_dist=20000)
     with timer('plot_whale_pts'):
         plot_whales_fade(fig, whales_seg_df, timestamp)
     with timer('plot_basemap'):
