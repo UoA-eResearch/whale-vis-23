@@ -18,25 +18,27 @@ def load_whales(file_name, bounds, crs, interpolate_mins=None):
 
     # Drop unwanted columns
     wdf = wdf[['id', 'name', 'date', 'lat', 'lon']]
-
-    if interpolate_mins is not None:
-        # Resample data to finer time resolution and interpolate points
-        # TODO: check this is valid in given crs
-        wdf = (
-            wdf.set_index('date')
-            .sort_values('id')
-            .groupby('id')
-            .resample(f'{interpolate_mins}min')  # resample to finer time resolution
-            .interpolate()                       # interpolate lat/long
-            .ffill()                             # fill non-numeric cols (name, id)
-            .reset_index(level='id', drop=True)  # drop id from index
-            .reset_index()                       # move date index back to column
-        )
+    wdf.rename(columns={'date': 'timestamp'}, inplace=True)
 
     # Convert to geodataframe
     wgdf = gpd.GeoDataFrame(wdf, geometry=gpd.points_from_xy(wdf['lon'], wdf['lat']), crs=4326)
     wgdf.drop(columns=['lat', 'lon'], inplace=True)
-    wgdf.rename(columns={'date': 'timestamp'}, inplace=True)
+
+    if interpolate_mins is not None:
+        # Resample data to finer time resolution and interpolate points
+        # TODO: check this is valid in given crs
+        wgdf = wgdf.sort_values(['id', 'timestamp'])
+        results = {}
+        for id, group in wgdf.groupby('id'):
+            for grp, sub_group in split_on_gaps(group, 36*3600):
+                if len(sub_group) > 0:
+                    res = interpolate_trace(sub_group, interval=60*interpolate_mins)
+                    res['id'] = f'{id}_{grp}'
+                    res['name'] = sub_group.iloc[0]['name']
+
+                    results[f'{id}_{grp}'] = res
+
+        wgdf = pd.concat(results, ignore_index=True)
 
     # Reproject
     wgdf = wgdf.to_crs(crs)

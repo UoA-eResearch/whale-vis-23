@@ -43,28 +43,6 @@ if __name__ == '__main__':
     else:
         vessel_encounters = None
 
-    # Set up timestamps
-    # ranges = [('2020-07-01', '2023-06-01'),
-    #           ('2020-07-01', '2021-06-01'),
-    #           ('2021-07-01', '2022-06-01'),
-    #           ('2022-07-01', '2023-06-01')]
-    # range_labels = ['full', '2020', '2021', '2022']
-    #
-    # timestamps = {
-    #     label: pd.date_range(start, end, freq='30min')
-    #     for label, (start, end) in zip(range_labels, ranges)
-    # }
-    #
-    # whale_mask = {
-    #     label: (whales_interp.timestamp >= start) & (whales_interp.timestamp < end)
-    #     for label, (start, end) in zip(range_labels, ranges)
-    # }
-    #
-    # vessel_mask = {
-    #     label: (vessel_points.timestamp >= start) & (vessel_points.timestamp < end)
-    #     for label, (start, end) in zip(range_labels, ranges)
-    # }
-
     start = '2020-07-01'
     end = '2023-06-30'
     timestamps = pd.date_range(start, end, freq='30min')
@@ -72,7 +50,7 @@ if __name__ == '__main__':
     vessel_mask = (vessel_points.timestamp >= start) & (vessel_points.timestamp < end)
 
     # Line segment dfs (for plotting fading lines)
-    whales_segs = points_to_segments(whales_interp[whale_mask], 'name')
+    whales_segs = points_to_segments(whales_interp[whale_mask], 'id')
     vessel_segs = points_to_segments(vessel_points[vessel_mask], 'callsign')
 
     # Convert all gdfs to lat/long
