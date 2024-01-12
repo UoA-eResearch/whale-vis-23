@@ -153,7 +153,7 @@ def traces_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas:
 
 def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000, timestamp=None):
     """Add encounter scatter/heatmap to figure"""
-    mask = (~vessel_pts['whale_dist'].isna()) & (vessel_pts['encounter_dist'] < max_dist)
+    mask = (~vessel_pts['encounter_dist'].isna()) & (vessel_pts['encounter_dist'] < max_dist)
     if timestamp:
         mask &= vessel_pts['timestamp'] <= timestamp
         mask &= vessel_pts['timestamp'] > (timestamp - timedelta(days=14))
