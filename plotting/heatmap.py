@@ -27,11 +27,11 @@ def _fig_size(bounds, plot_width=1200):
     return plot_width, frame_height
 
 
-def _fade(ts, plot_ts, cutoff):
+def _fade(ts, plot_ts, cutoff, max_alpha=0.5):
     """Quad ease out fade function, based on how long since point was plotted"""
     diff = (plot_ts - ts).total_seconds()
     if 0 <= diff <= cutoff:
-        return 1 - (diff / cutoff) ** 4
+        return max_alpha * (1 - (diff / cutoff) ** 4)
     else:
         return 0
 
@@ -76,7 +76,7 @@ def plot_whales_fade(fig: figure, whale_seg_df: GeoDataFrame, timestamp: datetim
         return
 
     whale_data = whale_seg_df[mask]
-    whale_data['fade'] = whale_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
+    whale_data['fade'] = whale_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600, max_alpha=0.8)
 
     cmapper = whale_colormap(whale_seg_df)
     src = GeoJSONDataSource(geojson=whale_data.drop(columns=['timestamp']).to_json())
@@ -224,7 +224,7 @@ def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
 
     if mask.sum() > 0:
         vessels_data = vessels_seg_df[mask]
-        vessels_data['fade'] = vessels_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600)
+        vessels_data['fade'] = vessels_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600, max_alpha=0.5)
 
         src = GeoJSONDataSource(geojson=vessels_data.drop(columns=['timestamp']).to_json())
         fig.multi_line('xs', 'ys', source=src, color={'field': 'type', 'transform': cmap},
