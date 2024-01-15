@@ -13,17 +13,10 @@ from data_processing import load_data
 from plotting import heatmap
 from plotting.util import fix_dateline
 from utils import timer
-import argparse
 
 
 if __name__ == '__main__':
-    # Get bounds name from argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('bounds', type=str, choices=['full', 'auck', 'camp', 'anti'])
-    parser.add_argument('--encounters', action='store_true', help='Plot encounters')
-    args = parser.parse_args()
-    bname = args.bounds
-    use_encounters = args.encounters
+    # Generates static maps for all bounds, time ranges, with or without encounters
 
     # Load base data
     whales, vessels, protected_areas, basemap, bounds = load_data.load_all()
@@ -39,11 +32,8 @@ if __name__ == '__main__':
     whales_interp = gpd.read_file('data/whales/whales_coast.gpkg')
 
     # Load encounters
-    if use_encounters:
-        vessel_encounters = gpd.read_file('data/encounters/vessel_encounters.gpkg')
-        # whale_encounters = gpd.read_file('data/encounters/whale_encounters.gpkg')
-    else:
-        vessel_encounters = None
+    vessel_encounters = gpd.read_file('data/encounters/vessel_encounters.gpkg')
+    # whale_encounters = gpd.read_file('data/encounters/whale_encounters.gpkg')
 
     # Set up timestamps
     ranges = [('2020-07-01', '2023-06-01'),
@@ -95,12 +85,11 @@ if __name__ == '__main__':
     # vessel_segs.geometry = vessel_segs.geometry.apply(fix_dateline)
     basemap.geometry = basemap.geometry.apply(fix_dateline)
 
-    if use_encounters:
-        vessel_encounters = vessel_encounters.to_crs(4326)
-        # whale_encounters = whale_encounters.to_crs(4326)
+    vessel_encounters = vessel_encounters.to_crs(4326)
+    # whale_encounters = whale_encounters.to_crs(4326)
 
-        vessel_encounters.geometry = vessel_encounters.geometry.apply(fix_dateline)
-        # whale_encounters.geometry = whale_encounters.geometry.apply(fix_dateline)
+    vessel_encounters.geometry = vessel_encounters.geometry.apply(fix_dateline)
+    # whale_encounters.geometry = whale_encounters.geometry.apply(fix_dateline)
 
     basemap_src = GeoJSONDataSource(geojson=basemap.to_json(default=str))
 
@@ -109,31 +98,33 @@ if __name__ == '__main__':
         'auck': bounds_auck,
         'camp': bounds_camp,
         'anti': bounds_ant,
-    }[bname]
+    }
 
     # Generate frames
     folder = '/pvol/static_maps'
     os.makedirs(folder, exist_ok=True)
 
     done = 0
-    for label, tss in timestamps.items():
-        if use_encounters:
-            fname = os.path.join(folder, f'map_{bname}_{label}_enc.png')
-        else:
-            fname = os.path.join(folder, f'map_{bname}_{label}.png')
+    for bname in ['full', 'auck', 'camp', 'anti']:
+        for label, tss in timestamps.items():
+            for use_encounters in [True, False]:
+                if use_encounters:
+                    fname = os.path.join(folder, f'map_{bname}_{label}_enc.png')
+                else:
+                    fname = os.path.join(folder, f'map_{bname}_{label}.png')
 
-        if path.isfile(fname):
-            continue
+                if path.isfile(fname):
+                    continue
 
-        print(bname, label)
-        with timer('Full frame'):
-            with timer('Generate frame'):
-                fig = heatmap.animation_frame(
-                    whales_interp[whale_mask[label]], vessel_points[vessel_mask[label]],
-                    protected_areas, basemap_src, bds,
-                    vessel_encounters[encounters_mask[label]] if use_encounters else None)
-            with timer('Export frame'):
-                export_png(fig, filename=fname)
+                print(bname, label, use_encounters)
+                with timer('Full frame'):
+                    with timer('Generate frame'):
+                        fig = heatmap.animation_frame(
+                            whales_interp[whale_mask[label]], vessel_points[vessel_mask[label]],
+                            protected_areas, basemap_src, bds[bname],
+                            vessel_encounters[encounters_mask[label]] if use_encounters else None)
+                    with timer('Export frame'):
+                        export_png(fig, filename=fname)
 
-            # Close selenium drivers to prevent memory bloat
-            webdriver_control.cleanup()
+                    # Close selenium drivers to prevent memory bloat
+                    webdriver_control.cleanup()
