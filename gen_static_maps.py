@@ -122,7 +122,7 @@ if __name__ == '__main__':
                         fig = heatmap.animation_frame(
                             whales_interp[whale_mask[label]], vessel_points[vessel_mask[label]],
                             protected_areas, basemap_src, bds[bname],
-                            vessel_encounters[encounters_mask[label]] if use_encounters else None)
+                            encounters=vessel_encounters[encounters_mask[label]] if use_encounters else None)
                     with timer('Export frame'):
                         export_png(fig, filename=fname)
 
