@@ -224,7 +224,8 @@ def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
 
     if mask.sum() > 0:
         vessels_data = vessels_seg_df[mask]
-        vessels_data['fade'] = vessels_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600, max_alpha=0.5)
+        vessels_data['fade'] = vessels_data['timestamp'].apply(_fade, plot_ts=timestamp, cutoff=14 * 24 * 3600,
+                                                               max_alpha=0.5)
 
         src = GeoJSONDataSource(geojson=vessels_data.drop(columns=['timestamp']).to_json())
         fig.multi_line('xs', 'ys', source=src, color={'field': 'type', 'transform': cmap},
@@ -243,12 +244,15 @@ def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
 
 def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
     """Plot vessel traces up to a given timestamp"""
-    mask = vessels_pts_df['timestamp'] <= timestamp
-    mask &= vessels_pts_df['timestamp'] > (timestamp - timedelta(days=14))
+    if timestamp is not None:
+        mask = vessels_pts_df['timestamp'] <= timestamp
+        mask &= vessels_pts_df['timestamp'] > (timestamp - timedelta(days=14))
+    else:
+        mask = slice(None)
 
     _, vessel_colors = vessel_colormap()
 
-    if mask.sum() > 0:
+    if mask.sum() > 0 or timestamp is None:
         vessel_data = vessels_pts_df[mask]
 
         for callsign, group in vessel_data.groupby('callsign'):
@@ -266,8 +270,13 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
     fig.add_layout(vessel_legend)
 
 
-def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bounds, timestamp):
-    """Produce a plot showing the current location of vessels and whales"""
+def animation_frame(whales_df: GeoDataFrame, vessels_pts_df: GeoDataFrame, protected_areas: GeoDataFrame,
+                    basemap_src: GeoJSONDataSource, bounds: list[float], timestamp: datetime = None,
+                    encounters: GeoDataFrame = None):
+    """
+    Produce a plot showing the current location of vessels and whales
+    If no timestamp is passed, plots all data given as a static map
+    """
     plot_width, plot_height = _fig_size(bounds)
     fig = figure(width=plot_width, height=plot_height, toolbar_location=None, match_aspect=True)
 
@@ -278,10 +287,14 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bou
         plot_partial_vessel_traces(fig, vessels_pts_df, timestamp)
     with timer('plot_whale_pts'):
         plot_whale_pts(fig, whales_df, timestamp)
+    if encounters is not None:
+        with timer('plot_encounters'):
+            plot_encounters(fig, encounters, max_dist=20000, timestamp=timestamp)
     with timer('plot_basemap'):
         plot_basemap(fig, basemap_src)
-    with timer('plot_location'):
-        plot_location(fig, vessels_pts_df, whales_df, timestamp)
+    if timestamp is not None:
+        with timer('plot_location'):
+            plot_location(fig, vessels_pts_df, whales_df, timestamp)
 
     fig.xaxis.axis_label = 'Lon'
     fig.yaxis.axis_label = 'Lat'
@@ -291,16 +304,18 @@ def animation_frame(whales_df, vessels_pts_df, protected_areas, basemap_src, bou
     scale_bar(fig, convert_from_deg=whales_df.crs.equals(4326))
     logo_height = 60 / plot_height
     add_logo(fig, 'assets/logo.png', bounds, x_pos=0.98, y_pos=0.98, height=logo_height, anchor='top_right')
-    date_annotation(fig, timestamp, bounds, x_pos=0.5, y_pos=0.02)
+    if timestamp is not None:
+        date_annotation(fig, timestamp, bounds, x_pos=0.5, y_pos=0.02)
 
     zoom_to_bounds(fig, bounds)
 
     return fig
 
 
-def animation_frame_fade(whales_seg_df, vessels_seg_df,
-                         whales_pts_df, vessels_pts_df,
-                         protected_areas, basemap_src, bounds, timestamp, encounters=None):
+def animation_frame_fade(whales_seg_df: GeoDataFrame, vessels_seg_df: GeoDataFrame,
+                         whales_pts_df: GeoDataFrame, vessels_pts_df: GeoDataFrame,
+                         protected_areas: GeoDataFrame, basemap_src: GeoJSONDataSource,
+                         bounds: list[float], timestamp: datetime, encounters: GeoDataFrame = None):
     """Produce a plot showing the current location of vessels and whales"""
     plot_width, plot_height = _fig_size(bounds)
     fig = figure(width=plot_width, height=plot_height, toolbar_location=None, match_aspect=True)
