@@ -29,7 +29,8 @@ if __name__ == '__main__':
     whales, vessels, protected_areas, basemap, bounds = load_data.load_all()
 
     # Load vessel points
-    vessel_data_files = [path.join('data', 'vessels', f'{vessel_type}_points_coast.gpkg') for vessel_type in ['Passenger', 'Tanker']]
+    vessel_data_files = [path.join('data', 'vessels', f'{vessel_type}_points_coast.gpkg') for vessel_type in
+                         ['Fishing', 'Other', 'Cargo', 'Passenger', 'Tanker']]
     vessel_data_sets = [gpd.read_file(vdf) for vdf in tqdm(vessel_data_files, desc="Loading vessel data")]
 
     vessel_points = pd.concat(vessel_data_sets)
