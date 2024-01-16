@@ -1,3 +1,2 @@
 data/vessels/*.gpkg filter=lfs diff=lfs merge=lfs -text
 data/whales/*.gpkg filter=lfs diff=lfs merge=lfs -text
-
