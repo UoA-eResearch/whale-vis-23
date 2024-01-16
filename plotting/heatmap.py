@@ -252,7 +252,7 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
 
     _, vessel_colors = vessel_colormap()
 
-    if mask.sum() > 0 or timestamp is None:
+    if timestamp is None or mask.sum() > 0:
         vessel_data = vessels_pts_df[mask]
 
         for callsign, group in vessel_data.groupby('callsign'):
