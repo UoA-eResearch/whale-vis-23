@@ -31,7 +31,7 @@ fqdn==1.5.1
 fsspec==2023.12.1
 geopandas==0.14.1
 h11==0.14.0
-idna==3.6
+idna==3.7
 importlib-metadata==7.0.0
 ipykernel==6.27.1
 ipython==8.18.1
