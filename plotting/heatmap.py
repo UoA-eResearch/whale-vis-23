@@ -304,6 +304,7 @@ def animation_frame(whales_df: GeoDataFrame, vessels_pts_df: GeoDataFrame, prote
     scale_bar(fig, convert_from_deg=whales_df.crs.equals(4326))
     logo_height = 60 / plot_height
     add_logo(fig, 'assets/logo.png', bounds, x_pos=0.98, y_pos=0.98, height=logo_height, anchor='top_right')
+    add_logo(fig, 'assets/UoA_logo.png', bounds, x_pos=0.06, y_pos=0.98, height=0.8*logo_height, anchor='top_left')
     if timestamp is not None:
         date_annotation(fig, timestamp, bounds, x_pos=0.5, y_pos=0.02)
 
@@ -343,6 +344,7 @@ def animation_frame_fade(whales_seg_df: GeoDataFrame, vessels_seg_df: GeoDataFra
     scale_bar(fig, convert_from_deg=whales_pts_df.crs.equals(4326))
     logo_height = 60 / plot_height
     add_logo(fig, 'assets/logo.png', bounds, x_pos=0.98, y_pos=0.98, height=logo_height, anchor='top_right')
+    add_logo(fig, 'assets/UoA_logo.png', bounds, x_pos=0.06, y_pos=0.98, height=0.8*logo_height, anchor='top_left')
     date_annotation(fig, timestamp, bounds, x_pos=0.5, y_pos=0.02)
 
     zoom_to_bounds(fig, bounds)
