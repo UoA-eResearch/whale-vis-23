@@ -2,6 +2,11 @@
 
 ## Snakemake
 Only the un-processed input files are included with this repository. Pre-processing is required to generate all the input files used in the generation of maps/videos.
+The first step is to run:
+```bash
+python data_processing/preprocessing.py
+```
+
 These files can be generated using the Snakemake pipeline provided in the `snakemake` directory, using the command:
 ```bash
 snakemake all --cores {n}

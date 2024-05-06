@@ -1,9 +1,6 @@
-import os
 from functools import partial
 from os import path
 import geopandas as gpd
-import pandas as pd
-from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 from pathlib import Path
 
@@ -67,3 +64,26 @@ def gen_encounters(source_df, target_df, output_file):
     encounters_df['encounter_dist'] = encounters.dist_to_whales(source_df, target_df)
 
     encounters_df.to_file(output_file, driver='GPKG')
+
+
+if __name__ == '__main__':
+    folder = Path('data') / 'vessels'
+
+    vessel_data_files = [(folder / f'{vessel_type}_points.gpkg', folder / f'{vessel_type}_points_coast.gpkg') for
+                         vessel_type in ['Fishing', 'Other', 'Cargo', 'Passenger', 'Tanker']]
+
+    # Snap vessel data to coast
+    for input_file, output_file in vessel_data_files:
+        if path.isfile(output_file):
+            continue
+        print(f'Processing {input_file}')
+        points_df = load_vessel_points(input_file, 2193)
+        snap_points_to_coast(points_df, output_file)
+
+    # Snap whale data to coast
+    whale_coast_file = 'data/whales/whales_coast.gpkg'
+    if not path.isfile(whale_coast_file):
+        print('Processing whales file')
+        _, bounds = load_vessel_traces('data/vessels/fishing_all.gpkg', crs=2193)
+        whales_interp = load_whales('data/whales/df_all_3.csv', bounds, 2193, 10)
+        snap_points_to_coast(whales_interp, whale_coast_file)
