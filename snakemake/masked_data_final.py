@@ -1,14 +1,8 @@
-import geopandas as gpd
-import pandas as pd
-
 from plotting.util import fix_dateline
+from .util import load_files
 
 # Load data
-if len(snakemake.input) == 1:
-    data = gpd.read_file(snakemake.input[0])
-else:
-    data_sets = [gpd.read_file(fname) for fname in snakemake.input]
-    data = pd.concat(data_sets)
+data = load_files(snakemake.input)
 
 # Mask to date range
 start = snakemake.wildcards.start
