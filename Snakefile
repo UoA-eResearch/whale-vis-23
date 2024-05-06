@@ -6,9 +6,16 @@ def all_files(start, end):
         f'data/intermediate/whale_pts_final_{start}_{end}.parquet',
         f'data/intermediate/vessel_seg_final_{start}_{end}.parquet',
         f'data/intermediate/whale_seg_final_{start}_{end}.parquet',
+        f'data/intermediate/vessel_encounters_final_{start}_{end}.parquet',
+        f'data/intermediate/whale_encounters_final_{start}_{end}.parquet',
         'data/intermediate/protected_final.parquet',
         'data/intermediate/basemap_final.parquet',
     ]
+
+wildcard_constraints:
+    # date format: YYYY-MM-DD
+    start = '[0-9]{4}-[0-9]{2}-[0-9]{2}',
+    end = '[0-9]{4}-[0-9]{2}-[0-9]{2}'
 
 rule all:
     # Full files required by frame generation
@@ -71,6 +78,16 @@ rule whale_segments:
     script:
         'snakemake/points_to_segments.py'
 
+# Encounters
+rule encounters:
+    input:
+        vessels=expand('data/vessels/{vtype}_points_coast.gpkg', vtype=VTYPES),
+        whales='data/whales/whales_coast.gpkg',
+    output:
+        temp('data/intermediate/{source}_encounters_{start}_{end}.gpkg')
+    script:
+        'snakemake/encounters.py'
+
 # Final data pre-processing: mask dates, convert crs, fix dateline, convert to parquet format
 rule vessel_pts_final:
     input:
@@ -101,6 +118,14 @@ rule whale_seg_final:
         'data/intermediate/whale_segments_{start}_{end}.gpkg'
     output:
         temp('data/intermediate/whale_seg_final_{start}_{end}.gpkg')
+    script:
+        'snakemake/masked_data_final.py'
+
+rule encounters_final:
+    input:
+        'data/intermediate/{source}_encounters_{start}_{end}.gpkg',
+    output:
+        temp('data/intermediate/{source}_encounters_final_{start}_{end}.gpkg')
     script:
         'snakemake/masked_data_final.py'
 
