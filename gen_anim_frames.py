@@ -1,7 +1,6 @@
 import os
 from os import path
 
-import numpy as np
 import pandas as pd
 import geopandas as gpd
 
@@ -25,26 +24,25 @@ if __name__ == '__main__':
 
     start = '2020-07-01'
     end = '2023-06-30'
+    # Full timestamp range
     timestamps = pd.date_range(start, end, freq='30min')
+    # Filtered timestamp range (2x speed when no whales present)
+    timestamps = pd.read_parquet(f'data/timestamps/filtered_timestamps_{start}_{end}_2.parquet').index
 
-    whales_interp = gpd.read_parquet(f'data/intermediate/whale_pts_final_{start}_{end}.parquet')
-    vessel_points = gpd.read_parquet(f'data/intermediate/vessel_pts_final_{start}_{end}.parquet')
-    protected_areas = gpd.read_parquet('data/intermediate/protected_final.parquet')
-    whales_segs = gpd.read_parquet(f'data/intermediate/whale_seg_final_{start}_{end}.parquet')
-    vessel_segs = gpd.read_parquet(f'data/intermediate/vessel_seg_final_{start}_{end}.parquet')
-    basemap = gpd.read_parquet('data/intermediate/basemap_final.parquet')
+    with timer('Load data'):
+        whales_interp = gpd.read_parquet(f'data/intermediate/whale_pts_final_{start}_{end}.parquet')
+        vessel_points = gpd.read_parquet(f'data/intermediate/vessel_pts_final_{start}_{end}.parquet')
+        protected_areas = gpd.read_parquet('data/intermediate/protected_final.parquet')
+        whales_segs = gpd.read_parquet(f'data/intermediate/whale_seg_final_{start}_{end}.parquet')
+        vessel_segs = gpd.read_parquet(f'data/intermediate/vessel_seg_final_{start}_{end}.parquet')
+        basemap = gpd.read_parquet('data/intermediate/basemap_final.parquet')
 
-    if use_encounters:
-        vessel_encounters = gpd.read_parquet(f'data/intermediate/vessel_encounters_final_{start}_{end}.parquet')
-        # whale_encounters = gpd.read_parquet(f'data/intermediate/whale_encounters_final_{start}_{end}.parquet')
-    else:
-        vessel_encounters = None
-        # whale_encounters = None
-
-    # Speed adjustment - skip every other frame when no whales present
-    has_whale = timestamps.map(lambda ts: any(whales_interp['timestamp'] == ts))
-    is_even = np.arange(len(timestamps)) % 2 == 0
-    timestamps = timestamps[has_whale | is_even]
+        if use_encounters:
+            vessel_encounters = gpd.read_parquet(f'data/intermediate/vessel_encounters_final_{start}_{end}.parquet')
+            # whale_encounters = gpd.read_parquet(f'data/intermediate/whale_encounters_final_{start}_{end}.parquet')
+        else:
+            vessel_encounters = None
+            # whale_encounters = None
 
     basemap_src = GeoJSONDataSource(geojson=basemap.to_json(default=str))
 

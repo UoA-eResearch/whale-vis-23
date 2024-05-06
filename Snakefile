@@ -10,6 +10,7 @@ def all_files(start, end):
         f'data/intermediate/whale_encounters_final_{start}_{end}.parquet',
         'data/intermediate/protected_final.parquet',
         'data/intermediate/basemap_final.parquet',
+        f'data/timestamps/filtered_timestamps_{start}_{end}_{2}.parquet'
     ]
 
 wildcard_constraints:
@@ -26,6 +27,15 @@ rule test:
     # Small output files used by testing code
     input:
         *all_files('2020-08-01', '2020-08-30')
+
+# Timestamps
+rule filtered_timestamps:
+    input:
+        'data/intermediate/whale_pts_final_{start}_{end}.parquet'
+    output:
+        'data/timestamps/filtered_timestamps_{start}_{end}_{interval}.parquet'
+    script:
+        'snakemake/filtered_timestamps.py'
 
 # Vessel data pre-processing: initial cleaning, interpolation, snap to coast, and segment
 rule clean_vessel_data:
