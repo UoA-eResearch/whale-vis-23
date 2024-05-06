@@ -36,15 +36,13 @@ rule clean_vessel_data:
     script:
         'snakemake/clean_vessel_data.py'
 
-rule vessel_points_to_coast:
-    input:
-        'data/vessels/{vtype}_points.gpkg'
-    output:
-        'data/vessels/{vtype}_points_coast.gpkg'
-    params:
-        whale=False
-    script:
-        'snakemake/snap_points_to_coast_vessels.py'
+# rule vessel_points_to_coast:
+#     input:
+#         'data/vessels/{vtype}_points.gpkg'
+#     output:
+#         'data/vessels/{vtype}_points_coast.gpkg'
+#     script:
+#         'snakemake/snap_points_to_coast_vessels.py'
 
 rule vessel_segments:
     input:
@@ -57,16 +55,14 @@ rule vessel_segments:
         'snakemake/points_to_segments.py'
 
 # Whale data pre-processing: snap to coast and segment
-rule whale_points_to_coast:
-    input:
-        'data/whales/df_all_3.csv',
-        'data/vessels/fishing_all.gpkg'  # Required for bounds
-    output:
-        'data/whales/whales_coast.gpkg'
-    params:
-        whale=True
-    script:
-        'snakemake/snap_points_to_coast_whales.py'
+# rule whale_points_to_coast:
+#     input:
+#         'data/whales/df_all_3.csv',
+#         'data/vessels/fishing_all.gpkg'  # Required for bounds
+#     output:
+#         'data/whales/whales_coast.gpkg'
+#     script:
+#         'snakemake/snap_points_to_coast_whales.py'
 
 rule whale_segments:
     input:
