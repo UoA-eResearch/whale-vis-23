@@ -76,6 +76,11 @@ def plot_whales_fade(fig: figure, whale_seg_df: GeoDataFrame, timestamp: datetim
     fig.multi_line('xs', 'ys', source=src, color={'field': 'name', 'transform': cmapper}, line_width=3,
                    line_alpha='fade')
 
+    legend_dummies = {
+        'Whale': fig.line([0, 0], [0, 0], color=cmapper.palette[0], line_width=8)
+    }
+    whale_legend = Legend(items=[('Whale', [legend_dummies['Whale']])], location=(2, 2), orientation='vertical')
+    fig.add_layout(whale_legend)
 
 def plot_whale_lines(fig: figure, whale_df: GeoDataFrame):
     """Add coloured whale traces to plot"""
@@ -165,8 +170,15 @@ def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000, times
                     fill_alpha=0.4, size=10, line_color=None)
 
     # Add colorbar
-    color_bar = ColorBar(color_mapper=cmap, title='Encounter distance')
+    color_bar = ColorBar(color_mapper=cmap, title='Encounter distance (m)')
     fig.add_layout(color_bar, 'right')
+
+    # Add legend
+    legend_dummies = {
+        'Encounter': fig.scatter([0], [0], color='yellow', fill_alpha=0.8, size=10, line_color=None)
+    }
+    encounter_legend = Legend(items=[('Encounter', [legend_dummies['Encounter']])], location=(115, 60), orientation='vertical')
+    fig.add_layout(encounter_legend)
 
 
 def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: GeoDataFrame,
@@ -231,7 +243,7 @@ def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
     }
 
     vessel_legend = Legend(items=[(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()],
-                           location=(2, 2), orientation='vertical')
+                           location=(2, 30), orientation='vertical')
     fig.add_layout(vessel_legend)
 
 
@@ -259,7 +271,7 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
     }
 
     vessel_legend = Legend(items=[(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()],
-                           location=(2, 2), orientation='vertical')
+                           location=(2, 30), orientation='vertical')
     fig.add_layout(vessel_legend)
 
 
