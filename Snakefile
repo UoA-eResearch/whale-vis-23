@@ -10,7 +10,8 @@ def all_files(start, end):
         f'data/intermediate/whale_encounters_final_{start}_{end}.parquet',
         'data/intermediate/protected_final.parquet',
         'data/intermediate/basemap_final.parquet',
-        f'data/timestamps/filtered_timestamps_{start}_{end}_{2}.parquet'
+        f'data/timestamps/filtered_timestamps_{start}_{end}_{2}.parquet',
+        f'data/timestamps/filtered_timestamps_{start}_{end}_{3}.parquet'
     ]
 
 wildcard_constraints:
