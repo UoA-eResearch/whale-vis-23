@@ -1,5 +1,7 @@
 import os
 from os import path
+
+import numpy as np
 import pandas as pd
 import geopandas as gpd
 
@@ -32,13 +34,17 @@ if __name__ == '__main__':
     vessel_segs = gpd.read_file(f'data/intermediate/vessel_seg_final_{start}_{end}.parquet')
     basemap = gpd.read_file('data/intermediate/basemap_final.parquet')
 
-
     if use_encounters:
         vessel_encounters = gpd.read_file(f'data/intermediate/vessel_encounters_final_{start}_{end}.parquet')
         # whale_encounters = gpd.read_file(f'data/intermediate/whale_encounters_final_{start}_{end}.parquet')
     else:
         vessel_encounters = None
         # whale_encounters = None
+
+    # Speed adjustment - skip every other frame when no whales present
+    has_whale = timestamps.map(lambda ts: any(whales_interp['timestamp'] == ts))
+    is_even = np.arange(len(timestamps)) % 2 == 0
+    timestamps = timestamps[has_whale | is_even]
 
     basemap_src = GeoJSONDataSource(geojson=basemap.to_json(default=str))
 
