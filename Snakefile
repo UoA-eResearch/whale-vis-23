@@ -20,6 +20,25 @@ rule test:
     input:
         *all_files('2020-08-01', '2020-08-30')
 
+# Vessel data pre-processing: initial cleaning, interpolation, snap to coast, and segment
+rule clean_vessel_data:
+    input:
+        'data/vessels/AIS_3_29_filtered.gpkg'
+    output:
+        expand('data/vessels/{vtype}_points.gpkg', vtype=VTYPES)
+    script:
+        'snakemake/clean_vessel_data.py'
+
+rule vessel_points_to_coast:
+    input:
+        'data/vessels/{vtype}_points.gpkg'
+    output:
+        'data/vessels/{vtype}_points_coast.gpkg'
+    params:
+        whale=False
+    script:
+        'snakemake/snap_points_to_coast.py'
+
 rule vessel_segments:
     input:
         expand('data/vessels/{vtype}_points_coast.gpkg', vtype=VTYPES)
@@ -29,6 +48,18 @@ rule vessel_segments:
         grouper='callsign'
     script:
         'snakemake/points_to_segments.py'
+
+# Whale data pre-processing: snap to coast and segment
+rule whale_points_to_coast:
+    input:
+        'data/whales/df_all_3.csv',
+        'data/vessels/fishing_all.gpkg'  # Required for bounds
+    output:
+        'data/whales/whales_coast.gpkg'
+    params:
+        whale=True
+    script:
+        'snakemake/snap_points_to_coast.py'
 
 rule whale_segments:
     input:
@@ -40,6 +71,7 @@ rule whale_segments:
     script:
         'snakemake/points_to_segments.py'
 
+# Final data pre-processing: mask dates, convert crs, fix dateline, convert to parquet format
 rule vessel_pts_final:
     input:
         expand('data/vessels/{vtype}_points_coast.gpkg', vtype=VTYPES),
