@@ -44,7 +44,7 @@ rule vessel_points_to_coast:
     params:
         whale=False
     script:
-        'snakemake/snap_points_to_coast.py'
+        'snakemake/snap_points_to_coast_vessels.py'
 
 rule vessel_segments:
     input:
@@ -66,7 +66,7 @@ rule whale_points_to_coast:
     params:
         whale=True
     script:
-        'snakemake/snap_points_to_coast.py'
+        'snakemake/snap_points_to_coast_whales.py'
 
 rule whale_segments:
     input:

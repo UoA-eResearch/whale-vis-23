@@ -1,4 +1,4 @@
-from snakemake.util import load_files
+from util import load_files
 
 from data_processing.preprocessing import gen_encounters
 

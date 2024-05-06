@@ -1,5 +1,5 @@
 from plotting.util import fix_dateline
-from .util import load_files
+from util import load_files
 
 # Load data
 data = load_files(snakemake.input)
