@@ -16,15 +16,8 @@ pd.options.mode.chained_assignment = None
 def _fig_size(bounds, plot_width=1200):
     """Calculates figure size required to give square axes"""
     data_width, data_height = bounds[2] - bounds[0], bounds[3] - bounds[1]
-    x_margin, y_margin = 164, 28
 
-    frame_width = plot_width - x_margin
-    frame_height = int(frame_width * data_height / data_width) + y_margin
-
-    if frame_height % 2 == 1:
-        frame_height += 1
-
-    return plot_width, frame_height
+    return plot_width, int(plot_width * data_height / data_width)
 
 
 def _fade(ts, plot_ts, cutoff, max_alpha=0.5):
@@ -181,7 +174,7 @@ def encounters_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, vessel_pts: 
     """Produce a plot showing encounters between vessels & whales"""
     # Base figure containing basemap, MPAs, vessel & whale traces
     plot_width, plot_height = _fig_size(bounds)
-    fig = figure(width=plot_width, height=plot_height, output_backend='webgl', toolbar_location=None)
+    fig = figure(frame_width=plot_width, frame_height=plot_height, output_backend='webgl', toolbar_location=None)
 
     # Add layers
     plot_protected_areas(fig, protected_areas)
@@ -278,7 +271,7 @@ def animation_frame(whales_df: GeoDataFrame, vessels_pts_df: GeoDataFrame, prote
     If no timestamp is passed, plots all data given as a static map
     """
     plot_width, plot_height = _fig_size(bounds)
-    fig = figure(width=plot_width, height=plot_height, toolbar_location=None, match_aspect=True)
+    fig = figure(frame_width=plot_width, frame_height=plot_height, toolbar_location=None, match_aspect=True)
 
     # Add layers
     with timer('plot_protected_areas'):
@@ -319,7 +312,7 @@ def animation_frame_fade(whales_seg_df: GeoDataFrame, vessels_seg_df: GeoDataFra
                          bounds: list[float], timestamp: datetime, encounters: GeoDataFrame = None):
     """Produce a plot showing the current location of vessels and whales"""
     plot_width, plot_height = _fig_size(bounds)
-    fig = figure(width=plot_width, height=plot_height, toolbar_location=None, match_aspect=True)
+    fig = figure(frame_width=plot_width, frame_height=plot_height, toolbar_location=None, match_aspect=True)
 
     # Add layers
     with timer('plot_protected_areas'):
