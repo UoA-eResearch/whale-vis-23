@@ -171,3 +171,7 @@ old_data/
 # Large intermediate/output files
 *.pickle
 *.mp4
+data/intermediate/
+
+# Snakemake temp files
+.snakemake/
