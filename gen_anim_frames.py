@@ -27,16 +27,16 @@ if __name__ == '__main__':
     end = '2023-06-30'
     timestamps = pd.date_range(start, end, freq='30min')
 
-    whales_interp = gpd.read_file(f'data/intermediate/whale_pts_final_{start}_{end}.parquet')
-    vessel_points = gpd.read_file(f'data/intermediate/vessel_pts_final_{start}_{end}.parquet')
-    protected_areas = gpd.read_file('data/intermediate/protected_final.parquet')
-    whales_segs = gpd.read_file(f'data/intermediate/whale_seg_final_{start}_{end}.parquet')
-    vessel_segs = gpd.read_file(f'data/intermediate/vessel_seg_final_{start}_{end}.parquet')
-    basemap = gpd.read_file('data/intermediate/basemap_final.parquet')
+    whales_interp = gpd.read_parquet(f'data/intermediate/whale_pts_final_{start}_{end}.parquet')
+    vessel_points = gpd.read_parquet(f'data/intermediate/vessel_pts_final_{start}_{end}.parquet')
+    protected_areas = gpd.read_parquet('data/intermediate/protected_final.parquet')
+    whales_segs = gpd.read_parquet(f'data/intermediate/whale_seg_final_{start}_{end}.parquet')
+    vessel_segs = gpd.read_parquet(f'data/intermediate/vessel_seg_final_{start}_{end}.parquet')
+    basemap = gpd.read_parquet('data/intermediate/basemap_final.parquet')
 
     if use_encounters:
-        vessel_encounters = gpd.read_file(f'data/intermediate/vessel_encounters_final_{start}_{end}.parquet')
-        # whale_encounters = gpd.read_file(f'data/intermediate/whale_encounters_final_{start}_{end}.parquet')
+        vessel_encounters = gpd.read_parquet(f'data/intermediate/vessel_encounters_final_{start}_{end}.parquet')
+        # whale_encounters = gpd.read_parquet(f'data/intermediate/whale_encounters_final_{start}_{end}.parquet')
     else:
         vessel_encounters = None
         # whale_encounters = None

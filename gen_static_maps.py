@@ -15,13 +15,13 @@ if __name__ == '__main__':
     # Load pre-processed data
     start = '2020-07-01'
     end = '2023-06-30'
-    whales_interp = gpd.read_file(f'data/intermediate/whale_pts_final_{start}_{end}.parquet')
-    vessel_points = gpd.read_file(f'data/intermediate/vessel_pts_final_{start}_{end}.parquet')
-    protected_areas = gpd.read_file('data/intermediate/protected_final.parquet')
-    whales_segs = gpd.read_file(f'data/intermediate/whale_seg_final_{start}_{end}.parquet')
-    vessel_segs = gpd.read_file(f'data/intermediate/vessel_seg_final_{start}_{end}.parquet')
-    basemap = gpd.read_file('data/intermediate/basemap_final.parquet')
-    vessel_encounters = gpd.read_file(f'data/intermediate/vessel_encounters_final_{start}_{end}.parquet')
+    whales_interp = gpd.read_parquet(f'data/intermediate/whale_pts_final_{start}_{end}.parquet')
+    vessel_points = gpd.read_parquet(f'data/intermediate/vessel_pts_final_{start}_{end}.parquet')
+    protected_areas = gpd.read_parquet('data/intermediate/protected_final.parquet')
+    whales_segs = gpd.read_parquet(f'data/intermediate/whale_seg_final_{start}_{end}.parquet')
+    vessel_segs = gpd.read_parquet(f'data/intermediate/vessel_seg_final_{start}_{end}.parquet')
+    basemap = gpd.read_parquet('data/intermediate/basemap_final.parquet')
+    vessel_encounters = gpd.read_parquet(f'data/intermediate/vessel_encounters_final_{start}_{end}.parquet')
 
     # Set up timestamps
     ranges = [('2020-07-01', '2023-06-01'),
