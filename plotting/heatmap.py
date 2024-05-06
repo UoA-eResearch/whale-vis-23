@@ -76,10 +76,16 @@ def plot_whales_fade(fig: figure, whale_seg_df: GeoDataFrame, timestamp: datetim
     fig.multi_line('xs', 'ys', source=src, color={'field': 'name', 'transform': cmapper}, line_width=3,
                    line_alpha='fade')
 
+    def _get_from_cmap(name):
+        idx = np.where(cmapper.factors == name)[0][0]
+        return cmapper.palette[idx]
+
     legend_dummies = {
-        'Whale': fig.line([0, 0], [0, 0], color=cmapper.palette[0], line_width=8)
+        name: fig.line([0, 0], [0, 0], color=_get_from_cmap(name), line_width=8)
+        for name in sorted(whale_data['name'].unique())
     }
-    whale_legend = Legend(items=[('Whale', [legend_dummies['Whale']])], location=(2, 2), orientation='vertical')
+    whale_legend = Legend(items=[(name, [legend_dummies[name]]) for name in legend_dummies],
+                          location=(2, 2), orientation='horizontal')
     fig.add_layout(whale_legend)
 
 def plot_whale_lines(fig: figure, whale_df: GeoDataFrame):
@@ -114,7 +120,7 @@ def plot_protected_areas(fig: figure, protected_areas: GeoDataFrame):
                               line_alpha=1, fill_alpha=0.8, view=mpa_view)
 
     pa_legend = Legend(items=[('MPA', [mpa_patches]), ('IMMA', [imma_patches])],
-                       location=(115, 2), orientation='vertical')
+                       location=(115, 30), orientation='vertical')
     fig.add_layout(pa_legend)
 
 
@@ -177,7 +183,7 @@ def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000, times
     legend_dummies = {
         'Encounter': fig.scatter([0], [0], color='yellow', fill_alpha=0.8, size=10, line_color=None)
     }
-    encounter_legend = Legend(items=[('Encounter', [legend_dummies['Encounter']])], location=(115, 60), orientation='vertical')
+    encounter_legend = Legend(items=[('Encounter', [legend_dummies['Encounter']])], location=(115, 90), orientation='vertical')
     fig.add_layout(encounter_legend)
 
 
