@@ -168,6 +168,10 @@ frames/
 # Unused data
 old_data/
 
+# Test output
+/tests/test_frames/
+tests/test_frames_enc/
+
 # Large intermediate/output files
 *.pickle
 *.mp4
@@ -175,3 +179,7 @@ data/intermediate/
 
 # Snakemake temp files
 .snakemake/
+
+# Selenium drivers
+geckodriver.exe
+chromedriver.exe

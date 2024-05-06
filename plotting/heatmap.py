@@ -140,7 +140,7 @@ def traces_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas:
     # Add annotations
     north_arrow(fig)
     scale_bar(fig, convert_from_deg=whale_df.crs.equals(4326))
-    add_logo(fig, 'assets/logo300.png', bounds, x_pos=0.95, y_pos=0.98, anchor='top_right')
+    add_logo(fig, 'assets/logo.png', bounds, x_pos=0.95, y_pos=0.98, anchor='top_right')
     if timestamp:
         date_annotation(fig, timestamp)
 
