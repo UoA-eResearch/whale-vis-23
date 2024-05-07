@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
-import numpy as np
+
 import pandas as pd
-from geopandas import GeoDataFrame
 from bokeh.models import GeoJSONDataSource, CategoricalColorMapper, LinearColorMapper, CDSView, BooleanFilter, ColorBar, \
-    Legend
+    Legend, ColorMapper
+from bokeh.palettes import Inferno256, Bright5
 from bokeh.plotting import figure
-from bokeh.palettes import Viridis256, Inferno256, Bright5
+from colorcet import glasbey_cool
+from geopandas import GeoDataFrame
 
 from plotting.annotations import north_arrow, scale_bar, date_annotation, add_logo
 from utils import timer
@@ -32,9 +33,10 @@ def _fade(ts, plot_ts, cutoff, max_alpha=0.5):
 def whale_colormap(whale_df):
     """Color whales by name"""
     whale_names = whale_df['name'].unique()
-    inds = np.floor(np.linspace(0, 255, len(whale_names))).astype(int)
-    colors = [Viridis256[i] for i in inds]
-    return CategoricalColorMapper(factors=whale_names, palette=colors)
+    # inds = np.floor(np.linspace(0, 255, len(whale_names))).astype(int)
+    # colors = [Viridis256[i] for i in inds]
+    colors = [glasbey_cool[i] for i in range(len(whale_names))]
+    return CategoricalColorMapper(factors=sorted(whale_names), palette=colors)
 
 
 def vessel_colormap():
@@ -44,7 +46,34 @@ def vessel_colormap():
     return CategoricalColorMapper(factors=vessel_types, palette=Bright5), vessel_colors
 
 
-def plot_whale_pts(fig: figure, whale_df: GeoDataFrame, timestamp: datetime = None):
+def add_whale_legend(fig: figure, cmapper: ColorMapper, names: list[str]) -> int:
+    def _get_from_cmap(name):
+        idx = cmapper.factors.index(name)
+        return cmapper.palette[idx]
+
+    print(names)
+    # Split legend into multiple lines
+    per_line = 6
+    num_lines = int(len(names) / per_line)
+    start_y = 30 * num_lines + 2
+    for idx in range(num_lines+1):
+        start = idx * per_line
+        stop = min((idx + 1) * per_line, len(names))
+        sub_names = names[start:stop]
+        print(sub_names)
+        # Create legend line
+        legend_dummies = {
+            name: fig.line([0, 0], [0, 0], color=_get_from_cmap(name), line_width=8)
+            for name in sub_names
+        }
+        whale_legend = Legend(items=[(name, [legend_dummies[name]]) for name in sub_names],
+                              location=(2, start_y - idx * 30), orientation='horizontal')
+        fig.add_layout(whale_legend)
+
+    # Space taken up by whale legends
+    return num_lines * 30
+
+def plot_whale_pts(fig: figure, whale_df: GeoDataFrame, timestamp: datetime = None) -> int:
     """Add whale points to plot, optionally up to a given timestamp"""
     cmapper = whale_colormap(whale_df)
     cmap = {t: c for t, c in zip(whale_df['name'].unique(), cmapper.palette)}
@@ -56,12 +85,16 @@ def plot_whale_pts(fig: figure, whale_df: GeoDataFrame, timestamp: datetime = No
             return
         for name, group in whale_df[mask].groupby('name'):
             fig.line(group.geometry.x, group.geometry.y, color=cmap[name], line_width=2, line_alpha=0.8)
+
+        return add_whale_legend(fig, cmapper, sorted(whale_df[mask]['name'].unique()))
     else:
         for name, group in whale_df.groupby('name'):
             fig.line(group.geometry.x, group.geometry.y, color=cmap[name], line_width=2, line_alpha=0.8)
 
+        return add_whale_legend(fig, cmapper, sorted(whale_df['name'].unique()))
 
-def plot_whales_fade(fig: figure, whale_seg_df: GeoDataFrame, timestamp: datetime):
+
+def plot_whales_fade(fig: figure, whale_seg_df: GeoDataFrame, timestamp: datetime) -> int:
     """Plot whale traces, fading out after a cutoff"""
     mask = whale_seg_df['timestamp'] <= timestamp
     mask &= whale_seg_df['timestamp'] > (timestamp - timedelta(days=14))
@@ -76,17 +109,8 @@ def plot_whales_fade(fig: figure, whale_seg_df: GeoDataFrame, timestamp: datetim
     fig.multi_line('xs', 'ys', source=src, color={'field': 'name', 'transform': cmapper}, line_width=3,
                    line_alpha='fade')
 
-    def _get_from_cmap(name):
-        idx = np.where(cmapper.factors == name)[0][0]
-        return cmapper.palette[idx]
+    return add_whale_legend(fig, cmapper, sorted(whale_data['name'].unique()))
 
-    legend_dummies = {
-        name: fig.line([0, 0], [0, 0], color=_get_from_cmap(name), line_width=8)
-        for name in sorted(whale_data['name'].unique())
-    }
-    whale_legend = Legend(items=[(name, [legend_dummies[name]]) for name in legend_dummies],
-                          location=(2, 2), orientation='horizontal')
-    fig.add_layout(whale_legend)
 
 def plot_whale_lines(fig: figure, whale_df: GeoDataFrame):
     """Add coloured whale traces to plot"""
@@ -109,18 +133,18 @@ def plot_basemap(fig: figure, basemap: GeoJSONDataSource):
     fig.patches('xs', 'ys', source=basemap, fill_color='lightgreen', line_alpha=1, fill_alpha=1)
 
 
-def plot_protected_areas(fig: figure, protected_areas: GeoDataFrame):
+def plot_protected_areas(fig: figure, protected_areas: GeoDataFrame, legend_offset=0):
     """Add marine protected areas to plot"""
     protected_source = GeoJSONDataSource(geojson=protected_areas.to_json())
     imma_view = CDSView(filter=BooleanFilter((protected_areas['ptype'] == 'imma').to_list()))
     mpa_view = CDSView(filter=BooleanFilter((protected_areas['ptype'] == 'mpa').to_list()))
     imma_patches = fig.patches('xs', 'ys', source=protected_source, fill_color='#ddd', line_color='#ddd',
-                               line_alpha=1, fill_alpha=0.8, view=imma_view)
+                               line_alpha=1, fill_alpha=0.5, view=imma_view)
     mpa_patches = fig.patches('xs', 'ys', source=protected_source, fill_color='lightskyblue', line_color='lightskyblue',
-                              line_alpha=1, fill_alpha=0.8, view=mpa_view)
+                              line_alpha=1, fill_alpha=0.5, view=mpa_view)
 
     pa_legend = Legend(items=[('MPA', [mpa_patches]), ('IMMA', [imma_patches])],
-                       location=(115, 30), orientation='vertical')
+                       location=(115, 2 + legend_offset), orientation='vertical')
     fig.add_layout(pa_legend)
 
 
@@ -155,7 +179,7 @@ def traces_map(whale_df: GeoDataFrame, vessel_df: GeoDataFrame, protected_areas:
     return fig
 
 
-def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000, timestamp=None):
+def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000, timestamp=None, legend_offset=0):
     """Add encounter scatter/heatmap to figure"""
     mask = (~vessel_pts['encounter_dist'].isna()) & (vessel_pts['encounter_dist'] < max_dist)
     if timestamp:
@@ -183,7 +207,7 @@ def plot_encounters(fig: figure, vessel_pts: GeoDataFrame, max_dist=20000, times
     legend_dummies = {
         'Encounter': fig.scatter([0], [0], color='yellow', fill_alpha=0.8, size=10, line_color=None)
     }
-    encounter_legend = Legend(items=[('Encounter', [legend_dummies['Encounter']])], location=(115, 90), orientation='vertical')
+    encounter_legend = Legend(items=[('Encounter', [legend_dummies['Encounter']])], location=(115, 62 + legend_offset), orientation='vertical')
     fig.add_layout(encounter_legend)
 
 
@@ -226,7 +250,7 @@ def plot_location(fig, vessel_pts_df, whale_pts_df, timestamp):
                     size=5)
 
 
-def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
+def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime, legend_offset=0):
     """Plot vessel traces, fading out after a cutoff"""
     mask = vessels_seg_df['timestamp'] <= timestamp
     mask &= vessels_seg_df['timestamp'] > (timestamp - timedelta(days=14))
@@ -249,11 +273,11 @@ def plot_vessels_fade(fig, vessels_seg_df, timestamp: datetime):
     }
 
     vessel_legend = Legend(items=[(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()],
-                           location=(2, 30), orientation='vertical')
+                           location=(2, 2 + legend_offset), orientation='vertical')
     fig.add_layout(vessel_legend)
 
 
-def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
+def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None, legend_offset=0):
     """Plot vessel traces up to a given timestamp"""
     if timestamp is not None:
         mask = vessels_pts_df['timestamp'] <= timestamp
@@ -277,7 +301,7 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None):
     }
 
     vessel_legend = Legend(items=[(vtype, [legend_dummies[vtype]]) for vtype in vessel_colors.keys()],
-                           location=(2, 30), orientation='vertical')
+                           location=(2, 2 + legend_offset), orientation='vertical')
     fig.add_layout(vessel_legend)
 
 
@@ -291,16 +315,19 @@ def animation_frame(whales_df: GeoDataFrame, vessels_pts_df: GeoDataFrame, prote
     plot_width, plot_height = _fig_size(bounds)
     fig = figure(frame_width=plot_width, frame_height=plot_height, toolbar_location=None, match_aspect=True)
 
+    # Leave space for 2 lines of whale legend
+    legend_offset = 60
+
     # Add layers
     with timer('plot_protected_areas'):
-        plot_protected_areas(fig, protected_areas)
+        plot_protected_areas(fig, protected_areas, legend_offset=legend_offset)
     with timer('plot_partial_vessel_traces'):
-        plot_partial_vessel_traces(fig, vessels_pts_df, timestamp)
+        plot_partial_vessel_traces(fig, vessels_pts_df, timestamp, legend_offset=legend_offset)
     with timer('plot_whale_pts'):
         plot_whale_pts(fig, whales_df, timestamp)
     if encounters is not None:
         with timer('plot_encounters'):
-            plot_encounters(fig, encounters, max_dist=20000, timestamp=timestamp)
+            plot_encounters(fig, encounters, max_dist=20000, timestamp=timestamp, legend_offset=legend_offset)
     with timer('plot_basemap'):
         plot_basemap(fig, basemap_src)
     if timestamp is not None:
@@ -332,16 +359,19 @@ def animation_frame_fade(whales_seg_df: GeoDataFrame, vessels_seg_df: GeoDataFra
     plot_width, plot_height = _fig_size(bounds)
     fig = figure(frame_width=plot_width, frame_height=plot_height, toolbar_location=None, match_aspect=True)
 
+    # Leave room for one line of legend
+    legend_offset = 30
+
     # Add layers
     with timer('plot_protected_areas'):
-        plot_protected_areas(fig, protected_areas)
+        plot_protected_areas(fig, protected_areas, legend_offset=legend_offset)
     with timer('plot_partial_vessel_traces'):
-        plot_vessels_fade(fig, vessels_seg_df, timestamp)
+        plot_vessels_fade(fig, vessels_seg_df, timestamp, legend_offset=legend_offset)
     with timer('plot_whale_pts'):
         plot_whales_fade(fig, whales_seg_df, timestamp)
     if encounters is not None:
         with timer('plot_encounters'):
-            plot_encounters(fig, encounters, max_dist=20000, timestamp=timestamp)
+            plot_encounters(fig, encounters, max_dist=20000, timestamp=timestamp, legend_offset=legend_offset)
     with timer('plot_basemap'):
         plot_basemap(fig, basemap_src)
     with timer('plot_location'):
