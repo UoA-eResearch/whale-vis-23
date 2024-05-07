@@ -51,7 +51,6 @@ def add_whale_legend(fig: figure, cmapper: ColorMapper, names: list[str]) -> int
         idx = cmapper.factors.index(name)
         return cmapper.palette[idx]
 
-    print(names)
     # Split legend into multiple lines
     per_line = 6
     num_lines = int(len(names) / per_line)
@@ -60,7 +59,6 @@ def add_whale_legend(fig: figure, cmapper: ColorMapper, names: list[str]) -> int
         start = idx * per_line
         stop = min((idx + 1) * per_line, len(names))
         sub_names = names[start:stop]
-        print(sub_names)
         # Create legend line
         legend_dummies = {
             name: fig.line([0, 0], [0, 0], color=_get_from_cmap(name), line_width=8)
