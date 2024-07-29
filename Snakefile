@@ -2,8 +2,9 @@ VTYPES = ['Fishing', 'Other', 'Cargo', 'Passenger', 'Tanker']
 BOUNDS = ['full', 'auck', 'camp', 'anti']
 
 
-def all_files(start, end):
-    timestamps = [f'data/timestamps/filtered_timestamps_{bound}_{start}_{end}_{3}.parquet' for bound in BOUNDS]
+def all_files(start, end, interval=3):
+    timestamps = [f'data/timestamps/filtered_timestamps_{bound}_{start}_{end}_{interval}.parquet' for bound in BOUNDS]
+    frame_nos = [f'data/timestamps/frame_numbers_{bound}_{start}_{end}_{interval}.json' for bound in BOUNDS]
     vessel_pts_final = [f'data/intermediate/vessel_pts_final_{bound}_{start}_{end}.parquet' for bound in BOUNDS]
     whale_pts_final = [f'data/intermediate/whale_pts_final_{bound}_{start}_{end}.parquet' for bound in BOUNDS]
     vessel_seg_final = [f'data/intermediate/vessel_seg_final_{bound}_{start}_{end}.parquet' for bound in BOUNDS]
@@ -18,6 +19,7 @@ def all_files(start, end):
         'data/intermediate/protected_final.parquet',
         'data/intermediate/basemap_final.parquet',
         *timestamps,
+        *frame_nos,
         *vessel_pts_final,
         *whale_pts_final,
         *vessel_seg_final,
@@ -48,6 +50,16 @@ rule filtered_timestamps:
         'data/timestamps/filtered_timestamps_{bounds}_{start}_{end}_{interval}.parquet'
     script:
         'snakemake/filtered_timestamps.py'
+
+# Given filtered timestamps and date ranges, calculate the frame numbers from which to generate videos
+rule frame_numbers:
+    input:
+        'data/timestamps/filtered_timestamps_{bounds}_{start}_{end}_{interval}.parquet',
+    output:
+        'data/timestamps/frame_numbers_{bounds}_{start}_{end}_{interval}.json'
+    script:
+        'snakemake/frame_numbers.py'
+
 
 # Vessel data pre-processing: initial cleaning, interpolation, snap to coast, and segment
 rule clean_vessel_data:
