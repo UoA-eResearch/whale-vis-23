@@ -24,7 +24,8 @@ def all_files(start, end, interval=3):
         *whale_pts_final,
         *vessel_seg_final,
         *whale_seg_final,
-        f'data/ffmpeg_commands_{start}_{end}_{interval}.sh'
+        f'frame_gen_{start}_{end}_{interval}.sh',
+        f'ffmpeg_commands_{start}_{end}_{interval}.sh'
     ]
 
 wildcard_constraints:
@@ -61,18 +62,28 @@ rule frame_numbers:
     script:
         'snakemake/frame_numbers.py'
 
-def ffmpeg_inputs(bounds):
+def all_frame_numbers(bounds):
     return {
         bds: f'data/timestamps/frame_numbers_{bds}_{{start}}_{{end}}_{{interval}}.json'
         for bds in BOUNDS
     }
 
+rule frame_gen_sh:
+    input:
+        **all_frame_numbers(BOUNDS)
+    output:
+        'frame_gen_{start}_{end}_{interval}.sh'
+    params:
+        frame_dir='/pvol/frames'
+    script:
+        'snakemake/frame_gen_sh.py'
+
 # Generate ffmpeg commands for each video
 rule ffmpeg_sh:
     input:
-        **ffmpeg_inputs(BOUNDS)
+        **all_frame_numbers(BOUNDS)
     output:
-        'data/ffmpeg_commands_{start}_{end}_{interval}.sh'
+        'ffmpeg_commands_{start}_{end}_{interval}.sh'
     params:
         frame_dir='/pvol/frames'
     script:
