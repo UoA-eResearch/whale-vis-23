@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -53,9 +54,9 @@ def add_whale_legend(fig: figure, cmapper: ColorMapper, names: list[str]) -> int
 
     # Split legend into multiple lines
     per_line = 6
-    num_lines = int(len(names) / per_line)
-    start_y = 30 * num_lines + 2
-    for idx in range(num_lines+1):
+    num_lines = math.ceil(len(names) / per_line)
+    start_y = 30 * (num_lines - 1) + 2
+    for idx in range(num_lines):
         start = idx * per_line
         stop = min((idx + 1) * per_line, len(names))
         sub_names = names[start:stop]
@@ -342,7 +343,7 @@ def animation_frame(whales_df: GeoDataFrame, vessels_pts_df: GeoDataFrame, prote
     add_logo(fig, 'assets/logo.png', bounds, x_pos=0.98, y_pos=0.98, height=logo_height, anchor='top_right')
     add_logo(fig, 'assets/UoA_logo.png', bounds, x_pos=0.06, y_pos=0.98, height=0.8*logo_height, anchor='top_left')
     if timestamp is not None:
-        date_annotation(fig, timestamp, bounds, x_pos=0.5, y_pos=0.02)
+        date_annotation(fig, timestamp, bounds, x_pos=0.5, y_pos=0.95)
 
     zoom_to_bounds(fig, bounds)
 
@@ -358,7 +359,7 @@ def animation_frame_fade(whales_seg_df: GeoDataFrame, vessels_seg_df: GeoDataFra
     fig = figure(frame_width=plot_width, frame_height=plot_height, toolbar_location=None, match_aspect=True)
 
     # Leave room for one line of legend
-    legend_offset = 30
+    legend_offset = 60
 
     # Add layers
     with timer('plot_protected_areas'):
@@ -384,7 +385,7 @@ def animation_frame_fade(whales_seg_df: GeoDataFrame, vessels_seg_df: GeoDataFra
     logo_height = 60 / plot_height
     add_logo(fig, 'assets/logo.png', bounds, x_pos=0.98, y_pos=0.98, height=logo_height, anchor='top_right')
     add_logo(fig, 'assets/UoA_logo.png', bounds, x_pos=0.06, y_pos=0.98, height=0.8*logo_height, anchor='top_left')
-    date_annotation(fig, timestamp, bounds, x_pos=0.5, y_pos=0.02)
+    date_annotation(fig, timestamp, bounds, x_pos=0.5, y_pos=0.95)
 
     zoom_to_bounds(fig, bounds)
 
