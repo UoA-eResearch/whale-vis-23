@@ -27,7 +27,7 @@ if __name__ == '__main__':
     # Full timestamp range
     timestamps = pd.date_range(start, end, freq='30min')
     # Filtered timestamp range (2x speed when no whales present)
-    timestamps = pd.read_parquet(f'data/timestamps/filtered_timestamps_{start}_{end}_3.parquet').index
+    timestamps = pd.read_parquet(f'data/timestamps/filtered_timestamps_{bname}_{start}_{end}_3.parquet').index
 
     with timer('Load data'):
         whales_interp = gpd.read_parquet(f'data/intermediate/whale_pts_final_{start}_{end}.parquet')

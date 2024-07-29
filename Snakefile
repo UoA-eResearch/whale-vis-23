@@ -1,6 +1,9 @@
 VTYPES = ['Fishing', 'Other', 'Cargo', 'Passenger', 'Tanker']
+BOUNDS = ['full', 'auck', 'camp', 'anti']
+
 
 def all_files(start, end):
+    per_bound = [f'data/timestamps/filtered_timestamps_{bound}_{start}_{end}_{3}.parquet' for bound in BOUNDS]
     return [
         f'data/intermediate/vessel_pts_final_{start}_{end}.parquet',
         f'data/intermediate/whale_pts_final_{start}_{end}.parquet',
@@ -10,14 +13,14 @@ def all_files(start, end):
         f'data/intermediate/whale_encounters_final_{start}_{end}.parquet',
         'data/intermediate/protected_final.parquet',
         'data/intermediate/basemap_final.parquet',
-        f'data/timestamps/filtered_timestamps_{start}_{end}_{2}.parquet',
-        f'data/timestamps/filtered_timestamps_{start}_{end}_{3}.parquet'
+        *per_bound
     ]
 
 wildcard_constraints:
     # date format: YYYY-MM-DD
     start = '[0-9]{4}-[0-9]{2}-[0-9]{2}',
-    end = '[0-9]{4}-[0-9]{2}-[0-9]{2}'
+    end = '[0-9]{4}-[0-9]{2}-[0-9]{2}',
+    bounds = '[a-z]*'
 
 rule all:
     # Full files required by frame generation
@@ -32,9 +35,10 @@ rule test:
 # Timestamps
 rule filtered_timestamps:
     input:
-        'data/intermediate/whale_pts_final_{start}_{end}.parquet'
+        whales='data/intermediate/whale_pts_final_{start}_{end}.parquet',
+        bounds='data/bounds.json'
     output:
-        'data/timestamps/filtered_timestamps_{start}_{end}_{interval}.parquet'
+        'data/timestamps/filtered_timestamps_{bounds}_{start}_{end}_{interval}.parquet'
     script:
         'snakemake/filtered_timestamps.py'
 
