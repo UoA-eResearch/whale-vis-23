@@ -3,7 +3,7 @@ import json
 from plotting import video
 
 # Generate a shell script that will call ffmpeg to generate each video (per year, per bounds)
-shell_script = ['#!/usr/bin/env sh']
+shell_script = ['#!/usr/bin/env sh', '']
 frame_dir = snakemake.params.frame_dir
 
 for bounds_name, fname in snakemake.input.items():
@@ -30,5 +30,5 @@ for bounds_name, fname in snakemake.input.items():
     shell_script.append(command)
     shell_script.append('')
 
-with open(snakemake.output[0], 'w') as f:
+with open(snakemake.output[0], 'w', newline='') as f:
     f.write('\n'.join(shell_script))
