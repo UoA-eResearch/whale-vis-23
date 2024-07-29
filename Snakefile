@@ -3,7 +3,11 @@ BOUNDS = ['full', 'auck', 'camp', 'anti']
 
 
 def all_files(start, end):
-    per_bound = [f'data/timestamps/filtered_timestamps_{bound}_{start}_{end}_{3}.parquet' for bound in BOUNDS]
+    timestamps = [f'data/timestamps/filtered_timestamps_{bound}_{start}_{end}_{3}.parquet' for bound in BOUNDS]
+    vessel_pts_final = [f'data/intermediate/vessel_pts_final_{bound}_{start}_{end}.parquet' for bound in BOUNDS]
+    whale_pts_final = [f'data/intermediate/whale_pts_final_{bound}_{start}_{end}.parquet' for bound in BOUNDS]
+    vessel_seg_final = [f'data/intermediate/vessel_seg_final_{bound}_{start}_{end}.parquet' for bound in BOUNDS]
+    whale_seg_final = [f'data/intermediate/whale_seg_final_{bound}_{start}_{end}.parquet' for bound in BOUNDS]
     return [
         f'data/intermediate/vessel_pts_final_{start}_{end}.parquet',
         f'data/intermediate/whale_pts_final_{start}_{end}.parquet',
@@ -13,7 +17,11 @@ def all_files(start, end):
         f'data/intermediate/whale_encounters_final_{start}_{end}.parquet',
         'data/intermediate/protected_final.parquet',
         'data/intermediate/basemap_final.parquet',
-        *per_bound
+        *timestamps,
+        *vessel_pts_final,
+        *whale_pts_final,
+        *vessel_seg_final,
+        *whale_seg_final,
     ]
 
 wildcard_constraints:
@@ -35,8 +43,7 @@ rule test:
 # Timestamps
 rule filtered_timestamps:
     input:
-        whales='data/intermediate/whale_pts_final_{start}_{end}.parquet',
-        bounds='data/bounds.json'
+        'data/intermediate/whale_pts_final_{bounds}_{start}_{end}.parquet',
     output:
         'data/timestamps/filtered_timestamps_{bounds}_{start}_{end}_{interval}.parquet'
     script:
@@ -102,33 +109,37 @@ rule encounters:
 # Final data pre-processing: mask dates, convert crs, fix dateline, convert to parquet format
 rule vessel_pts_final:
     input:
-        expand('data/vessels/{vtype}_points_coast.gpkg', vtype=VTYPES),
+        data=expand('data/vessels/{vtype}_points_coast.gpkg', vtype=VTYPES),
+        bounds='data/bounds.json'
     output:
-        temp('data/intermediate/vessel_pts_final_{start}_{end}.gpkg',)
+        temp('data/intermediate/vessel_pts_final_{bounds}_{start}_{end}.gpkg',)
     script:
         'snakemake/masked_data_final.py'
 
 rule whale_pts_final:
     input:
-        'data/whales/whales_coast.gpkg',
+        data='data/whales/whales_coast.gpkg',
+        bounds='data/bounds.json'
     output:
-        temp('data/intermediate/whale_pts_final_{start}_{end}.gpkg',)
+        temp('data/intermediate/whale_pts_final_{bounds}_{start}_{end}.gpkg',)
     script:
         'snakemake/masked_data_final.py'
 
 rule vessel_seg_final:
     input:
-        'data/intermediate/vessel_segments_{start}_{end}.gpkg',
+        data='data/intermediate/vessel_segments_{start}_{end}.gpkg',
+        bounds='data/bounds.json'
     output:
-        temp('data/intermediate/vessel_seg_final_{start}_{end}.gpkg')
+        temp('data/intermediate/vessel_seg_final_{bounds}_{start}_{end}.gpkg')
     script:
         'snakemake/masked_data_final.py'
 
 rule whale_seg_final:
     input:
-        'data/intermediate/whale_segments_{start}_{end}.gpkg'
+        data='data/intermediate/whale_segments_{start}_{end}.gpkg',
+        bounds='data/bounds.json'
     output:
-        temp('data/intermediate/whale_seg_final_{start}_{end}.gpkg')
+        temp('data/intermediate/whale_seg_final_{bounds}_{start}_{end}.gpkg')
     script:
         'snakemake/masked_data_final.py'
 

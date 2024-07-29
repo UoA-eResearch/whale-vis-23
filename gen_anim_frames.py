@@ -30,11 +30,11 @@ if __name__ == '__main__':
     timestamps = pd.read_parquet(f'data/timestamps/filtered_timestamps_{bname}_{start}_{end}_3.parquet').index
 
     with timer('Load data'):
-        whales_interp = gpd.read_parquet(f'data/intermediate/whale_pts_final_{start}_{end}.parquet')
-        vessel_points = gpd.read_parquet(f'data/intermediate/vessel_pts_final_{start}_{end}.parquet')
+        whales_interp = gpd.read_parquet(f'data/intermediate/whale_pts_final_{bname}_{start}_{end}.parquet')
+        vessel_points = gpd.read_parquet(f'data/intermediate/vessel_pts_final_{bname}_{start}_{end}.parquet')
         protected_areas = gpd.read_parquet('data/intermediate/protected_final.parquet')
-        whales_segs = gpd.read_parquet(f'data/intermediate/whale_seg_final_{start}_{end}.parquet')
-        vessel_segs = gpd.read_parquet(f'data/intermediate/vessel_seg_final_{start}_{end}.parquet')
+        whales_segs = gpd.read_parquet(f'data/intermediate/whale_seg_final_{bname}_{start}_{end}.parquet')
+        vessel_segs = gpd.read_parquet(f'data/intermediate/vessel_seg_final_{bname}_{start}_{end}.parquet')
         basemap = gpd.read_parquet('data/intermediate/basemap_final.parquet')
 
         if use_encounters:
