@@ -3,15 +3,11 @@ import pandas as pd
 import geopandas as gpd
 import shapely
 import topojson as tp
-from joblib import Memory
 from shapely import LineString
 
 from data_processing.interpolation import interpolate_trace, split_on_gaps
 
-memory = Memory('cache_data/', verbose=1)
 
-
-@memory.cache()
 def load_whales(file_name, bounds, crs, interpolate_mins=None):
     """Load whale tracking points, optionally interpolate to finer time resolution"""
     wdf = pd.read_csv(file_name, parse_dates=['date'])
@@ -62,7 +58,6 @@ def load_whale_lines(filename, crs):
     return gpd.GeoDataFrame(results, crs=crs)
 
 
-@memory.cache()
 def load_vessel_traces(file_name, crs):
     vessels = (
         gpd.read_file(file_name)
@@ -74,7 +69,6 @@ def load_vessel_traces(file_name, crs):
     return vessels, vessels.geometry.total_bounds
 
 
-@memory.cache()
 def load_vessel_points(filename, crs):
     gdf = gpd.read_file(filename)
 
@@ -96,7 +90,6 @@ def load_vessel_points(filename, crs):
     return gdf.to_crs(crs)
 
 
-@memory.cache()
 def load_protected_areas(bounds, crs):
     imma = (
         gpd.read_file('data/imma_hr.gpkg')  # Manually edited imma geometry to match NZ coastline
@@ -126,7 +119,6 @@ def load_protected_areas(bounds, crs):
     return protected_areas
 
 
-@memory.cache()
 def load_basemap(file_name, crs, bounds=None):
     basemap = (
         gpd.read_file(file_name)
@@ -153,7 +145,6 @@ def reduce_poly_res(gdf, tolerance):
     return topo.toposimplify(tolerance).to_gdf()
 
 
-@memory.cache()
 def load_all(crs=2193):
     vessels, bounds = load_vessel_traces('data/vessels/fishing_all.gpkg', crs=crs)
 

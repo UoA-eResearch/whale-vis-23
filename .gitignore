@@ -159,9 +159,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# Memo/cache data
-cache_data/
-
 # Generated animation frames
 frames/
 
@@ -169,7 +166,7 @@ frames/
 old_data/
 
 # Test output
-/tests/test_frames/
+tests/test_frames/
 tests/test_frames_enc/
 
 # Large intermediate/output files
