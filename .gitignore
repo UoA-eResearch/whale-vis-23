@@ -176,9 +176,14 @@ tests/test_frames_enc/
 *.pickle
 *.mp4
 data/intermediate/
+data/timestamps/
 
 # Snakemake temp files
 .snakemake/
+
+# Snakemake generated scripts
+ffmpeg_commands_*.sh
+frame_gen_*.sh
 
 # Selenium drivers
 geckodriver.exe
