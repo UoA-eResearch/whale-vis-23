@@ -17,7 +17,12 @@ for bounds_name, fname in snakemake.input.items():
     start_frame = min([frame_nums[0] for frame_nums in bounds.values()])
     end_frame = max([frame_nums[1] for frame_nums in bounds.values()])
     frame_no = end_frame - start_frame + 1
-    batch_no = (frame_no // 600) + 1  # Note that gen_anim_frames generates 600 frames at a time
+    # gen_anim_frames generates 600 frames at a time
+    #   however, batches occasionally crash due to issues with selenium/chromedriver
+    #   so, run an excessive (2x) number of batches to ensure all frames are generated
+    #   batches with no work to do will still take ~5 seconds to load data,
+    #   but this is negligible relative to the ~50 minutes for 600 frames
+    batch_no = (frame_no // 600) * 2
 
     shell_script.append(f'# {bounds_name}')
     shell_script.append(f'sh run.sh {bounds_name} {batch_no} > ./logs/{bounds_name}.log &')  # Run in background - 1 batch per bounds
