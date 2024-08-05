@@ -25,14 +25,16 @@ def all_files(start, end, interval=3):
         *vessel_seg_final,
         *whale_seg_final,
         f'frame_gen_{start}_{end}_{interval}.sh',
-        f'ffmpeg_commands_{start}_{end}_{interval}.sh'
+        f'ffmpeg_commands_{start}_{end}_{interval}.sh',
+        f'ffmpeg_commands_{start}_{end}_{interval}_enc.sh'
     ]
 
 wildcard_constraints:
     # date format: YYYY-MM-DD
     start = '[0-9]{4}-[0-9]{2}-[0-9]{2}',
     end = '[0-9]{4}-[0-9]{2}-[0-9]{2}',
-    bounds = '[a-z]*'
+    bounds = '[a-z]*',
+    interval = '[0-9]*'
 
 rule all:
     # Full files required by frame generation
@@ -85,7 +87,19 @@ rule ffmpeg_sh:
     output:
         'ffmpeg_commands_{start}_{end}_{interval}.sh'
     params:
-        frame_dir='/pvol/frames'
+        frame_dir='/pvol/frames',
+        output_dir='output/'
+    script:
+        'snakemake/ffmpeg_sh.py'
+
+rule ffmpeg_sh_enc:
+    input:
+        **all_frame_numbers(BOUNDS)
+    output:
+        'ffmpeg_commands_{start}_{end}_{interval}_enc.sh'
+    params:
+        frame_dir='/pvol/frames_enc',
+        output_dir='output_enc/'
     script:
         'snakemake/ffmpeg_sh.py'
 
