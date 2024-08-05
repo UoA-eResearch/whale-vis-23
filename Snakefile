@@ -49,9 +49,12 @@ rule test:
 # Timestamps
 rule filtered_timestamps:
     input:
-        'data/intermediate/whale_pts_final_{bounds}_{start}_{end}.parquet',
+        whales='data/intermediate/whale_pts_final_{bounds}_{start}_{end}.parquet',
+        vessels='data/intermediate/vessel_pts_final_{bounds}_{start}_{end}.parquet'
     output:
         'data/timestamps/filtered_timestamps_{bounds}_{start}_{end}_{interval}.parquet'
+    params:
+        no_vessel_interval=20  # Show every nth frame if no vessels present. Set to None/0 for same speed as no whales
     script:
         'snakemake/filtered_timestamps.py'
 
