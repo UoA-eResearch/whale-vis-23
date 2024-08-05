@@ -306,7 +306,7 @@ def plot_partial_vessel_traces(fig, vessels_pts_df, timestamp: datetime = None, 
 
 def animation_frame(whales_df: GeoDataFrame, vessels_pts_df: GeoDataFrame, protected_areas: GeoDataFrame,
                     basemap_src: GeoJSONDataSource, bounds: list[float], timestamp: datetime = None,
-                    encounters: GeoDataFrame = None):
+                    encounters: GeoDataFrame = None, legend_lines=2):
     """
     Produce a plot showing the current location of vessels and whales
     If no timestamp is passed, plots all data given as a static map
@@ -314,8 +314,8 @@ def animation_frame(whales_df: GeoDataFrame, vessels_pts_df: GeoDataFrame, prote
     plot_width, plot_height = _fig_size(bounds)
     fig = figure(frame_width=plot_width, frame_height=plot_height, toolbar_location=None, match_aspect=True)
 
-    # Leave space for 2 lines of whale legend
-    legend_offset = 60
+    # Leave space for x lines of whale legend
+    legend_offset = legend_lines * 30
 
     # Add layers
     with timer('plot_protected_areas'):
