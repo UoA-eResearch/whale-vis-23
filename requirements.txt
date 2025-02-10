@@ -125,7 +125,7 @@ websocket-client==1.7.0
 wget==3.2
 wsproto==1.2.0
 xyzservices==2023.10.1
-zipp==3.17.0
+zipp==3.19.1
 snakemake==8.11.3
 pyarrow==16.0.0
 colorcet==3.1.0
